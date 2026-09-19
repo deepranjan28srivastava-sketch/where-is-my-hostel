@@ -1,0 +1,5551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Dashboard — Where Is My Hostel?</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 250px;
+            background: #111827;
+            color: white;
+            padding: 24px 16px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: 800;
+            padding: 0 12px 28px;
+            border-bottom: 1px solid #374151;
+            margin-bottom: 20px;
+        }
+
+        .brand small {
+            display: block;
+            color: #9ca3af;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+
+        .nav-item {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: #d1d5db;
+            text-align: left;
+            padding: 13px 14px;
+            border-radius: 9px;
+            margin-bottom: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .logout {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            bottom: 20px;
+            background: #374151;
+        }
+
+        .logout:hover {
+            background: #dc2626;
+        }
+
+        /* MAIN */
+        .main {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+
+        .topbar {
+            height: 72px;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .topbar h1 {
+            font-size: 22px;
+        }
+
+        .admin-badge {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 8px 13px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .welcome {
+            margin-bottom: 25px;
+        }
+
+        .welcome h2 {
+            font-size: 26px;
+            margin-bottom: 7px;
+        }
+
+        .welcome p {
+            color: #6b7280;
+        }
+
+        /* STAT CARDS */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 22px;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        /* PANELS */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 22px;
+        }
+
+        .panel h3 {
+            margin-bottom: 7px;
+            font-size: 18px;
+        }
+
+        .panel p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .empty {
+            margin-top: 25px;
+            padding: 25px;
+            background: #f9fafb;
+            border-radius: 10px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1000px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 210px;
+            }
+
+            .main {
+                margin-left: 210px;
+                width: calc(100% - 210px);
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            Where Is My Hostel?
+            <small>ADMIN CONTROL PANEL</small>
+        </div>
+
+        <button class="nav-item active">
+            📊 Overview
+        </button>
+
+       <button class="nav-item" id="studentsNavButton">
+    👨‍🎓 Students
+</button>
+
+       <button class="nav-item" id="hostelsNavButton">
+    🏠 Hostels
+</button>
+       <button class="nav-item" id="ownersNavButton">
+    👤 Owners
+</button>
+
+       <button class="nav-item" id="enquiriesNavButton">
+    📩 Enquiries
+</button>
+
+      <button class="nav-item" id="claimsNavButton">
+    ✅ Hostel Claims
+</button>
+
+        <button class="nav-item" id="commissionNavButton">
+    💰 Commission
+</button>
+
+        <button class="nav-item" id="activityLogNavButton">
+    📜 Activity Log
+</button>
+
+       <button class="nav-item" id="settingsNavButton">
+    ⚙️ Settings
+</button>
+
+        <button class="nav-item logout" id="logoutButton">
+            🚪 Logout
+        </button>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <header class="topbar">
+
+            <h1>Admin Dashboard</h1>
+
+            <div class="admin-badge">
+                🔐 Administrator
+            </div>
+
+        </header>
+
+
+        <section class="content">
+
+            <div class="welcome">
+
+                <h2>Dashboard Overview</h2>
+
+                <p>
+                    Manage students, hostels, owners, enquiries and platform records.
+                </p>
+
+            </div>
+
+
+            <!-- STATISTICS -->
+            <div class="stats">
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Total Students
+                    </div>
+
+                    <div class="stat-value" id="totalStudents">
+                        —
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Total Hostels
+                    </div>
+
+                    <div class="stat-value" id="totalHostels">
+                        —
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Total Owners
+                    </div>
+
+                    <div class="stat-value" id="totalOwners">
+                        —
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Total Enquiries
+                    </div>
+
+                    <div class="stat-value" id="totalEnquiries">
+                        —
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Verified Joinings
+                    </div>
+
+                    <div class="stat-value" id="verifiedJoinings">
+                        —
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Pending Enquiries
+                    </div>
+
+                    <div class="stat-value" id="pendingEnquiries">
+                        —
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Pending Claims
+                    </div>
+
+                    <div class="stat-value" id="pendingClaims">
+                        —
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-label">
+                        Commission Due
+                    </div>
+
+                    <div class="stat-value" id="commissionDue">
+                        ₹0
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- LOWER PANELS -->
+            <div class="grid">
+
+                <div class="panel">
+
+                    <h3>📩 Recent Enquiries</h3>
+
+                    <p>
+                        Latest student enquiries will appear here.
+                    </p>
+
+                   <div id="adminRecentEnquiries" class="empty">
+    Loading records...
+</div>
+
+                </div>
+
+
+                <div class="panel">
+
+                    <h3>🏠 Recent Hostel Claims</h3>
+
+                    <p>
+                        Owner claim requests will appear here.
+                    </p>
+
+                   <div id="adminRecentClaims" class="empty">
+    Loading records...
+</div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script>
+const SUPABASE_URL =
+    "https://amjibqiukwkvcvgxucqg.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_fg49DIWK7aq1NGe9_RoRGA_hXiYq5CV";
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+
+/* ADMIN SESSION CHECK */
+
+async function checkAdminAccess() {
+
+    const {
+        data: { user },
+        error
+    } = await supabaseClient.auth.getUser();
+
+    if (error || !user) {
+
+        window.location.href = "admin.html";
+
+        return;
+    }
+
+
+    const { data: profile, error: profileError } =
+        await supabaseClient
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+
+
+    if (
+        profileError ||
+        !profile ||
+        profile.role !== "admin"
+    ) {
+
+        await supabaseClient.auth.signOut();
+
+        window.location.href = "admin.html";
+
+        return;
+    }
+
+
+    console.log("ADMIN ACCESS VERIFIED:", user.email);
+}
+
+async function loadRecentClaims() {
+
+    const container =
+        document.getElementById("adminRecentClaims");
+
+    if (!container) {
+        console.error("adminRecentClaims not found");
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("hostel_claim_requests")
+            .select(`
+                id,
+                hostel_id,
+                owner_name,
+                owner_mobile,
+                status,
+                submitted_at
+            `)
+            .order("id", { ascending: false })
+            .limit(10);
+
+    if (error) {
+        console.error("ADMIN CLAIMS ERROR:", error);
+
+        container.innerHTML = `
+            <div style="
+                padding:20px;
+                color:#dc2626;
+                background:#fef2f2;
+                border-radius:10px;
+            ">
+                Unable to load hostel claims.
+            </div>
+        `;
+
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        container.innerHTML = `
+            <div style="
+                padding:20px;
+                text-align:center;
+                color:#6b7280;
+            ">
+                No hostel claims found.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.classList.remove("empty");
+    container.innerHTML = "";
+
+    data.forEach(function(claim) {
+
+        const box =
+            document.createElement("div");
+
+        box.style.cssText =
+            "padding:16px 0;border-bottom:1px solid #e5e7eb;";
+
+        const title =
+            document.createElement("strong");
+
+        title.textContent =
+            "Claim #" + claim.id;
+
+        const owner =
+            document.createElement("div");
+
+        owner.style.marginTop = "6px";
+        owner.textContent =
+            "Owner: " + (claim.owner_name || "—");
+
+        const mobile =
+            document.createElement("div");
+
+        mobile.style.marginTop = "4px";
+        mobile.textContent =
+            "Mobile: " + (claim.owner_mobile || "—");
+
+        const hostel =
+            document.createElement("div");
+
+        hostel.style.marginTop = "4px";
+        hostel.style.color = "#6b7280";
+        hostel.textContent =
+            "Hostel ID: " + claim.hostel_id;
+
+        const status =
+            document.createElement("div");
+
+        status.style.marginTop = "6px";
+        status.textContent =
+            "Status: " + (claim.status || "pending");
+
+        box.appendChild(title);
+        box.appendChild(owner);
+        box.appendChild(mobile);
+        box.appendChild(hostel);
+        box.appendChild(status);
+
+
+        if (claim.status === "pending") {
+
+            const buttons =
+                document.createElement("div");
+
+            buttons.style.cssText =
+                "display:flex;gap:8px;margin-top:12px;";
+
+
+            const approveButton =
+                document.createElement("button");
+
+            approveButton.textContent =
+                "✓ Approve";
+
+            approveButton.style.cssText =
+                "border:none;background:#16a34a;color:white;padding:8px 12px;border-radius:7px;cursor:pointer;font-weight:600;";
+
+
+            approveButton.onclick =
+                function() {
+
+                    updateClaimStatus(
+                        claim.id,
+                        "approved",
+                        claim.hostel_id,
+                        claim.owner_name,
+                        claim.owner_mobile
+                    );
+                };
+
+
+            const rejectButton =
+                document.createElement("button");
+
+            rejectButton.textContent =
+                "✕ Reject";
+
+            rejectButton.style.cssText =
+                "border:none;background:#dc2626;color:white;padding:8px 12px;border-radius:7px;cursor:pointer;font-weight:600;";
+
+
+            rejectButton.onclick =
+                function() {
+
+                    updateClaimStatus(
+                        claim.id,
+                        "rejected",
+                        claim.hostel_id,
+                        claim.owner_name,
+                        claim.owner_mobile
+                    );
+                };
+
+
+            buttons.appendChild(approveButton);
+            buttons.appendChild(rejectButton);
+
+            box.appendChild(buttons);
+        }
+
+        container.appendChild(box);
+    });
+}
+
+
+async function updateClaimStatus(
+    claimId,
+    newStatus,
+    hostelId,
+    ownerName,
+    ownerMobile
+) {
+
+    const action =
+        newStatus === "approved"
+            ? "approve"
+            : "reject";
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to " +
+            action +
+            " this hostel claim?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    const { error: claimError } =
+        await supabaseClient
+            .from("hostel_claim_requests")
+            .update({
+                status: newStatus
+            })
+            .eq("id", claimId);
+
+
+    if (claimError) {
+
+        console.error(
+            "CLAIM UPDATE ERROR:",
+            claimError
+        );
+
+        alert(
+            "Claim update nahi ho paayi."
+        );
+
+        return;
+    }
+
+
+    if (newStatus === "approved") {
+
+        const { error: hostelError } =
+            await supabaseClient
+                .from("hostel_directory")
+                .update({
+                    management_status: "owner_managed",
+                    verification_status: "owner_claimed",
+                    claimed_owner_name: ownerName,
+                    claimed_owner_mobile: ownerMobile,
+                    claimed_at: new Date().toISOString()
+                })
+                .eq("id", hostelId);
+
+
+        if (hostelError) {
+
+            console.error(
+                "HOSTEL UPDATE ERROR:",
+                hostelError
+            );
+
+            alert(
+                "Claim approve ho gaya, " +
+                "lekin hostel record update nahi ho paaya."
+            );
+
+            loadRecentClaims();
+
+            return;
+        }
+    }
+
+
+    alert(
+        newStatus === "approved"
+            ? "Claim approved and hostel linked successfully."
+            : "Claim rejected successfully."
+    );
+
+
+    loadRecentClaims();
+}
+
+async function updateClaimStatus(claimId, newStatus) {
+
+    const action =
+        newStatus === "approved"
+            ? "approve"
+            : "reject";
+
+    const confirmed = confirm(
+        "Are you sure you want to " + action + " this claim?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const result = await supabaseClient
+        .from("hostel_claim_requests")
+        .update({
+            status: newStatus
+        })
+        .eq("id", claimId);
+
+    if (result.error) {
+
+        console.error(
+            "CLAIM UPDATE ERROR:",
+            result.error
+        );
+
+        alert("Claim update nahi ho paayi.");
+
+        return;
+    }
+
+    alert(
+        newStatus === "approved"
+            ? "Claim approved successfully."
+            : "Claim rejected successfully."
+    );
+
+    loadRecentClaims();
+}
+
+
+loadRecentClaims();
+function openStudentManagement() {
+
+    const oldPanel = document.getElementById("studentManagementPanel");
+
+    if (oldPanel) {
+        oldPanel.remove();
+    }
+
+    const panel = document.createElement("div");
+
+    panel.id = "studentManagementPanel";
+
+    panel.style.cssText = `
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        background:#f4f7fb;
+        z-index:9999;
+        overflow:auto;
+        padding:30px;
+    `;
+
+    panel.innerHTML = `
+        <div style="
+            max-width:1200px;
+            margin:0 auto;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:25px;
+            ">
+
+                <div>
+                    <h1 style="
+                        margin:0;
+                        font-size:28px;
+                        color:#111827;
+                    ">
+                        👨‍🎓 Student Management
+                    </h1>
+
+                    <p style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        Search and manage complete student records.
+                    </p>
+                </div>
+
+                <button
+                    onclick="closeStudentManagement()"
+                    style="
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        padding:10px 16px;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    ← Back to Dashboard
+                </button>
+
+            </div>
+
+            <div style="
+                background:white;
+                padding:22px;
+                border-radius:14px;
+                border:1px solid #e5e7eb;
+            ">
+
+                <div style="
+                    display:flex;
+                    gap:10px;
+                    flex-wrap:wrap;
+                ">
+
+                    <input
+                        id="adminStudentSearch"
+                        type="text"
+                        placeholder="Search by student name, mobile or enquiry ID"
+                        style="
+                            flex:1;
+                            min-width:280px;
+                            padding:13px;
+                            border:1px solid #d1d5db;
+                            border-radius:9px;
+                            font-size:14px;
+                            outline:none;
+                        "
+                    >
+
+                    <button
+                        onclick="searchAdminStudents()"
+                        style="
+                            padding:13px 20px;
+                            border:none;
+                            border-radius:9px;
+                            background:#2563eb;
+                            color:white;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                    >
+                        Search
+                    </button>
+
+                </div>
+
+                <div
+                    id="adminStudentResults"
+                    style="margin-top:22px;"
+                >
+                    Search for a student to view complete records.
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+}
+
+
+function closeStudentManagement() {
+
+    const panel =
+        document.getElementById("studentManagementPanel");
+
+    if (panel) {
+        panel.remove();
+    }
+}
+
+
+async function searchAdminStudents() {
+
+    const input =
+        document.getElementById("adminStudentSearch");
+
+    const results =
+        document.getElementById("adminStudentResults");
+
+    const search =
+        input.value.trim();
+
+    if (!search) {
+
+        results.innerHTML = `
+            <div style="
+                padding:18px;
+                background:#f9fafb;
+                border-radius:10px;
+                color:#6b7280;
+            ">
+                Enter a student name, mobile or enquiry ID.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    results.innerHTML = "Searching...";
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("students")
+            .select("id,name,mobile")
+            .or(
+                `name.ilike.%${search}%,mobile.ilike.%${search}%`
+            )
+            .limit(20);
+
+
+    if (error) {
+
+        console.error(
+            "ADMIN STUDENT SEARCH ERROR:",
+            error
+        );
+
+        results.innerHTML = `
+            <div style="
+                padding:18px;
+                background:#fef2f2;
+                color:#dc2626;
+                border-radius:10px;
+            ">
+                Unable to search students.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+        results.innerHTML = `
+            <div style="
+                padding:25px;
+                text-align:center;
+                color:#6b7280;
+            ">
+                No student found.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    results.innerHTML = data.map(student => `
+
+        <div style="
+            padding:18px;
+            margin-bottom:12px;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            background:white;
+        ">
+
+            <div style="
+                font-size:18px;
+                font-weight:700;
+            ">
+                ${student.name}
+            </div>
+
+            <div style="
+                margin-top:6px;
+                color:#6b7280;
+            ">
+                Mobile: ${student.mobile || "—"}
+            </div>
+
+            <div style="margin-top:12px;">
+
+                <button
+                    onclick="viewStudentDetails('${student.id}')"
+                    style="
+                        border:none;
+                        background:#2563eb;
+                        color:white;
+                        padding:8px 14px;
+                        border-radius:7px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    View Complete Record
+                </button>
+
+            </div>
+
+        </div>
+
+    `).join("");
+}
+
+
+async function viewStudentDetails(studentId) {
+
+    const results =
+        document.getElementById("adminStudentResults");
+
+    results.innerHTML = "Loading student record...";
+
+
+    const { data: student, error: studentError } =
+        await supabaseClient
+            .from("students")
+            .select("id,name,mobile")
+            .eq("id", studentId)
+            .single();
+
+
+    if (studentError) {
+
+        console.error(
+            "STUDENT DETAILS ERROR:",
+            studentError
+        );
+
+        results.innerHTML =
+            "Unable to load student record.";
+
+        return;
+    }
+
+
+    const { data: enquiries, error: enquiryError } =
+        await supabaseClient
+            .from("enquiries")
+            .select(`
+                id,
+                enquiry_code,
+                joining_date,
+                room_preference,
+                status,
+                hostel_directory_id
+            `)
+            .eq("student_id", studentId)
+            .order("id", { ascending: false });
+
+
+    if (enquiryError) {
+
+        console.error(
+            "STUDENT ENQUIRY HISTORY ERROR:",
+            enquiryError
+        );
+
+        results.innerHTML =
+            "Student found, but enquiry history could not be loaded.";
+
+        return;
+    }
+
+
+    results.innerHTML = `
+
+        <div style="
+            background:white;
+            padding:24px;
+            border:1px solid #e5e7eb;
+            border-radius:14px;
+        ">
+
+            <h2 style="margin-bottom:15px;">
+                ${student.name}
+            </h2>
+
+            <div style="color:#6b7280;">
+                Mobile: ${student.mobile || "—"}
+            </div>
+
+            <hr style="
+                margin:20px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+            ">
+
+            <h3 style="margin-bottom:15px;">
+                Enquiry History
+            </h3>
+
+            ${
+                enquiries && enquiries.length
+                ? enquiries.map(e => `
+                    <div style="
+                        padding:14px;
+                        margin-bottom:10px;
+                        background:#f9fafb;
+                        border-radius:10px;
+                    ">
+
+                        <strong>
+                            ${e.enquiry_code || "—"}
+                        </strong>
+
+                        <div style="margin-top:5px;">
+                            Joining:
+                            ${e.joining_date || "—"}
+                        </div>
+
+                        <div style="margin-top:5px;">
+                            Room:
+                            ${e.room_preference || "—"}
+                        </div>
+
+                        <div style="margin-top:5px;">
+                            Status:
+                            ${e.status || "—"}
+                        </div>
+
+                    </div>
+                `).join("")
+                : `
+                    <div style="
+                        padding:20px;
+                        color:#6b7280;
+                    ">
+                        No enquiry history found.
+                    </div>
+                `
+            }
+
+        </div>
+    `;
+}
+
+
+document
+    .getElementById("studentsNavButton")
+    .addEventListener("click", openStudentManagement);
+function openHostelManagement() {
+
+    const oldPanel =
+        document.getElementById("hostelManagementPanel");
+
+    if (oldPanel) {
+        oldPanel.remove();
+    }
+
+    const panel = document.createElement("div");
+
+    panel.id = "hostelManagementPanel";
+
+    panel.style.cssText = `
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        background:#f4f7fb;
+        z-index:9999;
+        overflow:auto;
+        padding:30px;
+    `;
+
+    panel.innerHTML = `
+        <div style="
+            max-width:1250px;
+            margin:0 auto;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                margin-bottom:25px;
+            ">
+
+                <div>
+                    <h1 style="
+                        margin:0;
+                        font-size:28px;
+                        color:#111827;
+                    ">
+                        🏠 Hostel Management
+                    </h1>
+
+                    <p style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        Search and manage complete hostel records.
+                    </p>
+                </div>
+
+                <button
+                    onclick="closeHostelManagement()"
+                    style="
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        padding:10px 16px;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    ← Back to Dashboard
+                </button>
+
+            </div>
+
+            <div style="
+                background:white;
+                padding:22px;
+                border:1px solid #e5e7eb;
+                border-radius:14px;
+            ">
+
+                <div style="
+                    display:flex;
+                    gap:10px;
+                    flex-wrap:wrap;
+                ">
+
+                    <input
+                        id="adminHostelSearch"
+                        type="text"
+                        placeholder="Search hostel by name or address"
+                        style="
+                            flex:1;
+                            min-width:280px;
+                            padding:13px;
+                            border:1px solid #d1d5db;
+                            border-radius:9px;
+                            font-size:14px;
+                            outline:none;
+                        "
+                    >
+
+                    <button
+                        onclick="searchAdminHostels()"
+                        style="
+                            padding:13px 20px;
+                            border:none;
+                            border-radius:9px;
+                            background:#2563eb;
+                            color:white;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                    >
+                        Search
+                    </button>
+
+                </div>
+
+                <div
+                    id="adminHostelResults"
+                    style="margin-top:22px;"
+                >
+                    Loading hostels...
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    searchAdminHostels();
+}
+
+
+function closeHostelManagement() {
+
+    const panel =
+        document.getElementById("hostelManagementPanel");
+
+    if (panel) {
+        panel.remove();
+    }
+}
+
+
+async function searchAdminHostels() {
+
+    const input =
+        document.getElementById("adminHostelSearch");
+
+    const results =
+        document.getElementById("adminHostelResults");
+
+    if (!input || !results) {
+        return;
+    }
+
+    const search =
+        input.value.trim();
+
+    results.innerHTML = "Loading hostels...";
+
+
+    let query = supabaseClient
+        .from("hostel_directory")
+        .select(`
+            id,
+            hostel_name,
+            address,
+            property_type,
+            room_type,
+            rent_monthly,
+            ac_available,
+            balcony_available,
+            food_available,
+            wifi_available,
+            available_rooms,
+            availability_status,
+            hostel_rules,
+            hostel_timing,
+            management_status,
+            verification_status,
+            is_active
+        `)
+        .eq("is_active", true)
+        .order("hostel_name", {
+            ascending: true
+        })
+        .limit(50);
+
+
+    if (search) {
+
+        query = query.or(
+            `hostel_name.ilike.%${search}%,address.ilike.%${search}%`
+        );
+    }
+
+
+    const { data, error } =
+        await query;
+
+
+    if (error) {
+
+        console.error(
+            "ADMIN HOSTEL SEARCH ERROR:",
+            error
+        );
+
+        results.innerHTML = `
+            <div style="
+                padding:18px;
+                background:#fef2f2;
+                color:#dc2626;
+                border-radius:10px;
+            ">
+                Unable to load hostels.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+        results.innerHTML = `
+            <div style="
+                padding:25px;
+                text-align:center;
+                color:#6b7280;
+                background:#f9fafb;
+                border-radius:10px;
+            ">
+                No hostels found.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    results.innerHTML = data.map(hostel => `
+
+        <div style="
+            padding:18px;
+            margin-bottom:12px;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            background:white;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:flex-start;
+                gap:15px;
+            ">
+
+                <div>
+
+                    <div style="
+                        font-size:18px;
+                        font-weight:700;
+                        color:#111827;
+                    ">
+                        ${hostel.hostel_name || "Unnamed Hostel"}
+                    </div>
+
+                    <div style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        ${hostel.address || "Address not available"}
+                    </div>
+
+                </div>
+
+                <button
+                    onclick="viewHostelDetails(${hostel.id})"
+                    style="
+                        border:none;
+                        background:#2563eb;
+                        color:white;
+                        padding:8px 14px;
+                        border-radius:7px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    View Details
+                </button>
+
+            </div>
+
+            <div style="
+                margin-top:12px;
+                color:#374151;
+                font-size:14px;
+            ">
+                Type:
+                ${hostel.property_type || "—"}
+            </div>
+
+            <div style="
+                margin-top:5px;
+                color:#374151;
+                font-size:14px;
+            ">
+                Rent:
+                ${hostel.rent_monthly
+                    ? "₹" + hostel.rent_monthly
+                    : "—"}
+            </div>
+
+            <div style="
+                margin-top:5px;
+                color:#6b7280;
+                font-size:13px;
+            ">
+                Management:
+                ${hostel.management_status || "—"}
+                · Verification:
+                ${hostel.verification_status || "—"}
+            </div>
+
+        </div>
+
+    `).join("");
+}
+
+
+async function viewHostelDetails(hostelId) {
+
+    const results =
+        document.getElementById("adminHostelResults");
+
+    results.innerHTML =
+        "Loading complete hostel record...";
+
+
+    const { data: hostel, error } =
+        await supabaseClient
+            .from("hostel_directory")
+            .select(`
+                id,
+                hostel_name,
+                address,
+                property_type,
+                room_type,
+                rent_monthly,
+                ac_available,
+                balcony_available,
+                food_available,
+                wifi_available,
+                available_rooms,
+                availability_status,
+                hostel_rules,
+                hostel_timing,
+                management_status,
+                verification_status
+            `)
+            .eq("id", hostelId)
+            .single();
+
+
+    if (error) {
+
+        console.error(
+            "HOSTEL DETAILS ERROR:",
+            error
+        );
+
+        results.innerHTML =
+            "Unable to load hostel details.";
+
+        return;
+    }
+
+
+    results.innerHTML = `
+
+        <div style="
+            background:white;
+            padding:24px;
+            border:1px solid #e5e7eb;
+            border-radius:14px;
+        ">
+
+            <button
+                onclick="searchAdminHostels()"
+                style="
+                    border:none;
+                    background:#f3f4f6;
+                    padding:8px 12px;
+                    border-radius:7px;
+                    cursor:pointer;
+                    margin-bottom:18px;
+                "
+            >
+                ← Back to Hostels
+            </button>
+
+            <h2 style="
+                margin-bottom:8px;
+            ">
+                ${hostel.hostel_name || "Unnamed Hostel"}
+            </h2>
+
+            <div style="
+                color:#6b7280;
+                margin-bottom:20px;
+            ">
+                ${hostel.address || "Address not available"}
+            </div>
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(2,1fr);
+                gap:12px;
+            ">
+
+                ${hostelInfo(
+                    "Property Type",
+                    hostel.property_type
+                )}
+
+                ${hostelInfo(
+                    "Room Type",
+                    hostel.room_type
+                )}
+
+                ${hostelInfo(
+                    "Monthly Rent",
+                    hostel.rent_monthly
+                        ? "₹" + hostel.rent_monthly
+                        : "—"
+                )}
+
+                ${hostelInfo(
+                    "Available Rooms",
+                    hostel.available_rooms
+                )}
+
+                ${hostelInfo(
+                    "AC",
+                    yesNo(hostel.ac_available)
+                )}
+
+                ${hostelInfo(
+                    "Balcony",
+                    yesNo(hostel.balcony_available)
+                )}
+
+                ${hostelInfo(
+                    "Food",
+                    yesNo(hostel.food_available)
+                )}
+
+                ${hostelInfo(
+                    "Wi-Fi",
+                    yesNo(hostel.wifi_available)
+                )}
+
+                ${hostelInfo(
+                    "Availability",
+                    hostel.availability_status
+                )}
+
+                ${hostelInfo(
+                    "Management",
+                    hostel.management_status
+                )}
+
+                ${hostelInfo(
+                    "Verification",
+                    hostel.verification_status
+                )}
+
+                ${hostelInfo(
+                    "Hostel Timing",
+                    hostel.hostel_timing
+                )}
+
+            </div>
+
+            <div style="
+                margin-top:20px;
+                padding:16px;
+                background:#f9fafb;
+                border-radius:10px;
+            ">
+
+                <strong>Hostel Rules</strong>
+
+                <div style="
+                    margin-top:8px;
+                    color:#6b7280;
+                    white-space:pre-wrap;
+                ">
+                    ${hostel.hostel_rules || "No rules added."}
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+function hostelInfo(label, value) {
+
+    return `
+        <div style="
+            padding:14px;
+            background:#f9fafb;
+            border-radius:9px;
+        ">
+
+            <div style="
+                font-size:12px;
+                color:#6b7280;
+            ">
+                ${label}
+            </div>
+
+            <div style="
+                margin-top:5px;
+                font-weight:600;
+                color:#111827;
+            ">
+                ${value ?? "—"}
+            </div>
+
+        </div>
+    `;
+}
+
+
+function yesNo(value) {
+
+    if (value === true) {
+        return "Yes";
+    }
+
+    if (value === false) {
+        return "No";
+    }
+
+    return "—";
+}
+
+
+document
+    .getElementById("hostelsNavButton")
+    .addEventListener(
+        "click",
+        openHostelManagement
+    );function openOwnerManagement() {
+
+    const oldPanel =
+        document.getElementById("ownerManagementPanel");
+
+    if (oldPanel) {
+        oldPanel.remove();
+    }
+
+    const panel = document.createElement("div");
+
+    panel.id = "ownerManagementPanel";
+
+    panel.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:#f4f7fb;
+        z-index:9999;
+        overflow:auto;
+        padding:30px;
+    `;
+
+    panel.innerHTML = `
+        <div style="
+            max-width:1250px;
+            margin:0 auto;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                margin-bottom:25px;
+            ">
+
+                <div>
+                    <h1 style="
+                        margin:0;
+                        font-size:28px;
+                        color:#111827;
+                    ">
+                        👤 Owner Management
+                    </h1>
+
+                    <p style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        Search owners and view their complete platform records.
+                    </p>
+                </div>
+
+                <button
+                    onclick="closeOwnerManagement()"
+                    style="
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        padding:10px 16px;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    ← Back to Dashboard
+                </button>
+
+            </div>
+
+
+            <div style="
+                background:white;
+                padding:22px;
+                border:1px solid #e5e7eb;
+                border-radius:14px;
+            ">
+
+                <div style="
+                    display:flex;
+                    gap:10px;
+                    flex-wrap:wrap;
+                ">
+
+                    <input
+                        id="adminOwnerSearch"
+                        type="text"
+                        placeholder="Search by owner name, mobile or email"
+                        style="
+                            flex:1;
+                            min-width:280px;
+                            padding:13px;
+                            border:1px solid #d1d5db;
+                            border-radius:9px;
+                            font-size:14px;
+                            outline:none;
+                        "
+                    >
+
+                    <button
+                        onclick="searchAdminOwners()"
+                        style="
+                            padding:13px 20px;
+                            border:none;
+                            border-radius:9px;
+                            background:#2563eb;
+                            color:white;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                    >
+                        Search
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="adminOwnerResults"
+                    style="margin-top:22px;"
+                >
+                    Loading owners...
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    searchAdminOwners();
+}
+
+
+function closeOwnerManagement() {
+
+    const panel =
+        document.getElementById("ownerManagementPanel");
+
+    if (panel) {
+        panel.remove();
+    }
+}
+
+
+async function searchAdminOwners() {
+
+    const input =
+        document.getElementById("adminOwnerSearch");
+
+    const results =
+        document.getElementById("adminOwnerResults");
+
+    if (!input || !results) {
+        return;
+    }
+
+    const search =
+        input.value.trim().toLowerCase();
+
+    results.innerHTML = "Loading owners...";
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("owners")
+            .select(`
+                id,
+                user_id,
+                name,
+                mobile,
+                email,
+                status,
+                created_at,
+                auth_user_id
+            `)
+            .order("name", {
+                ascending: true
+            })
+            .limit(200);
+
+
+    if (error) {
+
+        console.error(
+            "ADMIN OWNER SEARCH ERROR:",
+            error
+        );
+
+        results.innerHTML = `
+            <div style="
+                padding:18px;
+                background:#fef2f2;
+                color:#dc2626;
+                border-radius:10px;
+            ">
+                Unable to load owners.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    let owners =
+        data || [];
+
+
+    if (search) {
+
+        owners = owners.filter(owner => {
+
+            const name =
+                (owner.name || "").toLowerCase();
+
+            const mobile =
+                (owner.mobile || "").toLowerCase();
+
+            const email =
+                (owner.email || "").toLowerCase();
+
+            return (
+                name.includes(search) ||
+                mobile.includes(search) ||
+                email.includes(search)
+            );
+        });
+    }
+
+
+    if (owners.length === 0) {
+
+        results.innerHTML = `
+            <div style="
+                padding:30px;
+                text-align:center;
+                color:#6b7280;
+                background:#f9fafb;
+                border-radius:10px;
+            ">
+                No owners found.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    results.innerHTML = owners.map(owner => `
+
+        <div style="
+            padding:18px;
+            margin-bottom:12px;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            background:white;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:flex-start;
+                gap:15px;
+            ">
+
+                <div>
+
+                    <div style="
+                        font-size:18px;
+                        font-weight:700;
+                        color:#111827;
+                    ">
+                        ${owner.name || "Unnamed Owner"}
+                    </div>
+
+                    <div style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        Mobile:
+                        ${owner.mobile || "—"}
+                    </div>
+
+                    <div style="
+                        margin-top:4px;
+                        color:#6b7280;
+                    ">
+                        Email:
+                        ${owner.email || "—"}
+                    </div>
+
+                </div>
+
+                <button
+                    onclick="viewOwnerDetails('${owner.id}')"
+                    style="
+                        border:none;
+                        background:#2563eb;
+                        color:white;
+                        padding:8px 14px;
+                        border-radius:7px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    View Full Record
+                </button>
+
+            </div>
+
+            <div style="
+                margin-top:10px;
+                color:#6b7280;
+                font-size:13px;
+            ">
+                Status:
+                ${owner.status || "—"}
+            </div>
+
+        </div>
+
+    `).join("");
+}
+
+
+async function viewOwnerDetails(ownerId) {
+
+    const results =
+        document.getElementById("adminOwnerResults");
+
+    if (!results) {
+        return;
+    }
+
+    results.innerHTML =
+        "Loading complete owner record...";
+
+
+    const { data: owner, error: ownerError } =
+        await supabaseClient
+            .from("owners")
+            .select(`
+                id,
+                user_id,
+                name,
+                mobile,
+                email,
+                status,
+                created_at,
+                auth_user_id
+            `)
+            .eq("id", ownerId)
+            .single();
+
+
+    if (ownerError) {
+
+        console.error(
+            "OWNER DETAILS ERROR:",
+            ownerError
+        );
+
+        results.innerHTML =
+            "Unable to load owner details.";
+
+        return;
+    }
+
+
+    const { data: properties, error: propertyError } =
+        await supabaseClient
+            .from("hostel_directory")
+            .select(`
+                id,
+                hostel_name,
+                address,
+                property_type,
+                rent_monthly,
+                availability_status,
+                management_status,
+                verification_status
+            `)
+            .eq("claimed_by_owner_id", ownerId)
+            .order("hostel_name", {
+                ascending: true
+            });
+
+
+    if (propertyError) {
+
+        console.error(
+            "OWNER PROPERTY ERROR:",
+            propertyError
+        );
+    }
+
+
+    const propertyIds =
+        (properties || []).map(
+            property => property.id
+        );
+
+
+    let enquiries = [];
+    let claims = [];
+    let commissions = [];
+
+
+    if (propertyIds.length > 0) {
+
+        const enquiryResult =
+            await supabaseClient
+                .from("enquiries")
+                .select(`
+                    id,
+                    enquiry_code,
+                    joining_date,
+                    room_preference,
+                    status,
+                    hostel_directory_id
+                `)
+                .in(
+                    "hostel_directory_id",
+                    propertyIds
+                )
+                .order("id", {
+                    ascending: false
+                });
+
+
+        if (!enquiryResult.error) {
+            enquiries =
+                enquiryResult.data || [];
+        }
+    }
+
+
+    if (owner.mobile) {
+
+        const claimResult =
+            await supabaseClient
+                .from("hostel_claim_requests")
+                .select(`
+                    id,
+                    hostel_id,
+                    owner_name,
+                    owner_mobile,
+                    status,
+                    submitted_at
+                `)
+                .eq(
+                    "owner_mobile",
+                    owner.mobile
+                )
+                .order("id", {
+                    ascending: false
+                });
+
+
+        if (!claimResult.error) {
+            claims =
+                claimResult.data || [];
+        }
+    }
+
+
+    const commissionResult =
+        await supabaseClient
+            .from("commissions")
+            .select(`
+                id,
+                enquiry_id,
+                amount,
+                status,
+                created_at,
+                verified_at,
+                paid_at
+            `)
+            .eq("owner_id", ownerId)
+            .order("id", {
+                ascending: false
+            });
+
+
+    if (!commissionResult.error) {
+        commissions =
+            commissionResult.data || [];
+    }
+
+
+    results.innerHTML = `
+
+        <div style="
+            background:white;
+            padding:25px;
+            border:1px solid #e5e7eb;
+            border-radius:14px;
+        ">
+
+            <button
+                onclick="searchAdminOwners()"
+                style="
+                    border:none;
+                    background:#f3f4f6;
+                    padding:8px 12px;
+                    border-radius:7px;
+                    cursor:pointer;
+                    margin-bottom:20px;
+                "
+            >
+                ← Back to Owners
+            </button>
+
+
+            <h2 style="
+                margin:0 0 8px;
+            ">
+                ${owner.name || "Unnamed Owner"}
+            </h2>
+
+
+            <div style="
+                color:#6b7280;
+                line-height:1.8;
+            ">
+
+                Mobile:
+                ${owner.mobile || "—"}
+                <br>
+
+                Email:
+                ${owner.email || "—"}
+                <br>
+
+                Status:
+                ${owner.status || "—"}
+                <br>
+
+                Created:
+                ${
+                    owner.created_at
+                        ? new Date(owner.created_at).toLocaleString()
+                        : "—"
+                }
+
+            </div>
+
+
+            <hr style="
+                margin:22px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+            ">
+
+
+            <h3>
+                🏠 Properties
+            </h3>
+
+
+            <div style="margin-top:12px;">
+
+                ${
+                    properties && properties.length
+                    ? properties.map(property => `
+                        <div style="
+                            padding:14px;
+                            margin-bottom:10px;
+                            background:#f9fafb;
+                            border-radius:9px;
+                        ">
+
+                            <strong>
+                                ${property.hostel_name}
+                            </strong>
+
+                            <div style="
+                                margin-top:5px;
+                                color:#6b7280;
+                            ">
+                                ${property.address || "—"}
+                            </div>
+
+                            <div style="
+                                margin-top:5px;
+                                color:#6b7280;
+                            ">
+                                Rent:
+                                ${
+                                    property.rent_monthly
+                                        ? "₹" + property.rent_monthly
+                                        : "—"
+                                }
+
+                                · Status:
+                                ${property.management_status || "—"}
+                            </div>
+
+                        </div>
+                    `).join("")
+                    : `
+                        <div style="
+                            padding:18px;
+                            color:#6b7280;
+                            background:#f9fafb;
+                            border-radius:9px;
+                        ">
+                            No properties linked to this owner.
+                        </div>
+                    `
+                }
+
+            </div>
+
+
+            <hr style="
+                margin:22px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+            ">
+
+
+            <h3>
+                📩 Enquiries
+            </h3>
+
+
+            <div style="margin-top:12px;">
+
+                ${
+                    enquiries.length
+                    ? enquiries.map(enquiry => `
+                        <div style="
+                            padding:14px;
+                            margin-bottom:10px;
+                            background:#f9fafb;
+                            border-radius:9px;
+                        ">
+
+                            <strong>
+                                ${enquiry.enquiry_code || "—"}
+                            </strong>
+
+                            <div style="margin-top:5px;">
+                                Joining:
+                                ${enquiry.joining_date || "—"}
+                            </div>
+
+                            <div style="margin-top:5px;">
+                                Room:
+                                ${enquiry.room_preference || "—"}
+                            </div>
+
+                            <div style="margin-top:5px;">
+                                Status:
+                                ${enquiry.status || "—"}
+                            </div>
+
+                        </div>
+                    `).join("")
+                    : `
+                        <div style="
+                            padding:18px;
+                            color:#6b7280;
+                            background:#f9fafb;
+                            border-radius:9px;
+                        ">
+                            No enquiries found.
+                        </div>
+                    `
+                }
+
+            </div>
+
+
+            <hr style="
+                margin:22px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+            ">
+
+
+            <h3>
+                ✅ Claim History
+            </h3>
+
+
+            <div style="margin-top:12px;">
+
+                ${
+                    claims.length
+                    ? claims.map(claim => `
+                        <div style="
+                            padding:14px;
+                            margin-bottom:10px;
+                            background:#f9fafb;
+                            border-radius:9px;
+                        ">
+
+                            <strong>
+                                Claim #${claim.id}
+                            </strong>
+
+                            <div style="margin-top:5px;">
+                                Hostel ID:
+                                ${claim.hostel_id}
+                            </div>
+
+                            <div style="margin-top:5px;">
+                                Status:
+                                ${claim.status || "—"}
+                            </div>
+
+                        </div>
+                    `).join("")
+                    : `
+                        <div style="
+                            padding:18px;
+                            color:#6b7280;
+                            background:#f9fafb;
+                            border-radius:9px;
+                        ">
+                            No claim history found.
+                        </div>
+                    `
+                }
+
+            </div>
+
+
+            <hr style="
+                margin:22px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+            ">
+
+
+            <button class="nav-item" id="commissionNavButton">
+    💰 Commission
+</button>
+
+
+            <div style="margin-top:12px;">
+
+                ${
+                    commissions.length
+                    ? commissions.map(commission => `
+                        <div style="
+                            padding:14px;
+                            margin-bottom:10px;
+                            background:#f9fafb;
+                            border-radius:9px;
+                        ">
+
+                            <strong>
+                                ₹${commission.amount || 0}
+                            </strong>
+
+                            <div style="margin-top:5px;">
+                                Enquiry ID:
+                                ${commission.enquiry_id || "—"}
+                            </div>
+
+                            <div style="margin-top:5px;">
+                                Status:
+                                ${commission.status || "—"}
+                            </div>
+
+                        </div>
+                    `).join("")
+                    : `
+                        <div style="
+                            padding:18px;
+                            color:#6b7280;
+                            background:#f9fafb;
+                            border-radius:9px;
+                        ">
+                            No commission records found.
+                        </div>
+                    `
+                }
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+document
+    .getElementById("ownersNavButton")
+    .addEventListener(
+        "click",
+        openOwnerManagement
+    );function openEnquiryManagement() {
+
+    const oldPanel =
+        document.getElementById("enquiryManagementPanel");
+
+    if (oldPanel) {
+        oldPanel.remove();
+    }
+
+    const panel = document.createElement("div");
+
+    panel.id = "enquiryManagementPanel";
+
+    panel.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:#f4f7fb;
+        z-index:9999;
+        overflow:auto;
+        padding:30px;
+    `;
+
+    panel.innerHTML = `
+        <div style="
+            max-width:1300px;
+            margin:0 auto;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                margin-bottom:25px;
+            ">
+
+                <div>
+                    <h1 style="
+                        margin:0;
+                        font-size:28px;
+                        color:#111827;
+                    ">
+                        📩 Enquiry Management
+                    </h1>
+
+                    <p style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        View and manage complete student enquiry records.
+                    </p>
+                </div>
+
+                <button
+                    onclick="closeEnquiryManagement()"
+                    style="
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        padding:10px 16px;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    ← Back to Dashboard
+                </button>
+
+            </div>
+
+
+            <div style="
+                background:white;
+                padding:22px;
+                border:1px solid #e5e7eb;
+                border-radius:14px;
+            ">
+
+                <div style="
+                    display:flex;
+                    gap:10px;
+                    flex-wrap:wrap;
+                ">
+
+                    <input
+                        id="adminEnquirySearch"
+                        type="text"
+                        placeholder="Search enquiry ID, student, mobile, hostel or owner"
+                        style="
+                            flex:1;
+                            min-width:300px;
+                            padding:13px;
+                            border:1px solid #d1d5db;
+                            border-radius:9px;
+                            font-size:14px;
+                            outline:none;
+                        "
+                    >
+
+                    <select
+                        id="adminEnquiryStatus"
+                        style="
+                            min-width:160px;
+                            padding:13px;
+                            border:1px solid #d1d5db;
+                            border-radius:9px;
+                            font-size:14px;
+                            background:white;
+                        "
+                    >
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="verified">Verified</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+
+                    <button
+                        onclick="searchAdminEnquiries()"
+                        style="
+                            padding:13px 20px;
+                            border:none;
+                            border-radius:9px;
+                            background:#2563eb;
+                            color:white;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                    >
+                        Search
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="adminEnquiryResults"
+                    style="margin-top:22px;"
+                >
+                    Loading enquiries...
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    searchAdminEnquiries();
+}
+
+
+function closeEnquiryManagement() {
+
+    const panel =
+        document.getElementById("enquiryManagementPanel");
+
+    if (panel) {
+        panel.remove();
+    }
+}
+
+
+async function searchAdminEnquiries() {
+
+    const searchInput =
+        document.getElementById("adminEnquirySearch");
+
+    const statusInput =
+        document.getElementById("adminEnquiryStatus");
+
+    const results =
+        document.getElementById("adminEnquiryResults");
+
+    if (!searchInput || !statusInput || !results) {
+        return;
+    }
+
+
+    const search =
+        searchInput.value.trim().toLowerCase();
+
+    const selectedStatus =
+        statusInput.value;
+
+
+    results.innerHTML = "Loading enquiries...";
+
+
+    const { data: enquiries, error: enquiryError } =
+        await supabaseClient
+            .from("enquiries")
+            .select(`
+                id,
+                enquiry_code,
+                joining_date,
+                room_preference,
+                status,
+                owner_action,
+                owner_action_at,
+                student_joined_at,
+                student_id,
+                hostel_directory_id
+            `)
+            .order("id", {
+                ascending: false
+            })
+            .limit(200);
+
+
+    if (enquiryError) {
+
+        console.error(
+            "ADMIN ENQUIRY MANAGEMENT ERROR:",
+            enquiryError
+        );
+
+        results.innerHTML = `
+            <div style="
+                padding:18px;
+                background:#fef2f2;
+                color:#dc2626;
+                border-radius:10px;
+            ">
+                Unable to load enquiries.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    if (!enquiries || enquiries.length === 0) {
+
+        results.innerHTML = `
+            <div style="
+                padding:30px;
+                text-align:center;
+                color:#6b7280;
+                background:#f9fafb;
+                border-radius:10px;
+            ">
+                No enquiries found.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const studentIds = [
+        ...new Set(
+            enquiries
+                .map(e => e.student_id)
+                .filter(Boolean)
+        )
+    ];
+
+
+    const hostelIds = [
+        ...new Set(
+            enquiries
+                .map(e => e.hostel_directory_id)
+                .filter(Boolean)
+        )
+    ];
+
+
+    let students = [];
+    let hostels = [];
+    let owners = [];
+
+
+    if (studentIds.length > 0) {
+
+        const studentResult =
+            await supabaseClient
+                .from("students")
+                .select(`
+                    id,
+                    name,
+                    mobile
+                `)
+                .in("id", studentIds);
+
+        if (studentResult.error) {
+
+            console.error(
+                "ADMIN ENQUIRY STUDENT LOAD ERROR:",
+                studentResult.error
+            );
+
+        } else {
+
+            students =
+                studentResult.data || [];
+        }
+    }
+
+
+    if (hostelIds.length > 0) {
+
+        const hostelResult =
+            await supabaseClient
+                .from("hostel_directory")
+                .select(`
+                    id,
+                    hostel_name,
+                    address,
+                    claimed_by_owner_id
+                `)
+                .in("id", hostelIds);
+
+        if (hostelResult.error) {
+
+            console.error(
+                "ADMIN ENQUIRY HOSTEL LOAD ERROR:",
+                hostelResult.error
+            );
+
+        } else {
+
+            hostels =
+                hostelResult.data || [];
+        }
+    }
+
+
+    const ownerIds = [
+        ...new Set(
+            hostels
+                .map(h => h.claimed_by_owner_id)
+                .filter(Boolean)
+        )
+    ];
+
+
+    if (ownerIds.length > 0) {
+
+        const ownerResult =
+            await supabaseClient
+                .from("owners")
+                .select(`
+                    id,
+                    name,
+                    mobile,
+                    email
+                `)
+                .in("id", ownerIds);
+
+        if (ownerResult.error) {
+
+            console.error(
+                "ADMIN ENQUIRY OWNER LOAD ERROR:",
+                ownerResult.error
+            );
+
+        } else {
+
+            owners =
+                ownerResult.data || [];
+        }
+    }
+
+
+    const studentMap = {};
+    const hostelMap = {};
+    const ownerMap = {};
+
+
+    students.forEach(student => {
+        studentMap[student.id] = student;
+    });
+
+
+    hostels.forEach(hostel => {
+        hostelMap[hostel.id] = hostel;
+    });
+
+
+    owners.forEach(owner => {
+        ownerMap[owner.id] = owner;
+    });
+
+
+    let records = enquiries.map(enquiry => {
+
+        const student =
+            studentMap[enquiry.student_id];
+
+        const hostel =
+            hostelMap[enquiry.hostel_directory_id];
+
+        const owner =
+            hostel?.claimed_by_owner_id
+                ? ownerMap[hostel.claimed_by_owner_id]
+                : null;
+
+        return {
+            enquiry,
+            student,
+            hostel,
+            owner
+        };
+    });
+
+
+    if (selectedStatus) {
+
+        records = records.filter(record =>
+            record.enquiry.status === selectedStatus
+        );
+    }
+
+
+    if (search) {
+
+        records = records.filter(record => {
+
+            const enquiry =
+                record.enquiry;
+
+            const student =
+                record.student;
+
+            const hostel =
+                record.hostel;
+
+            const owner =
+                record.owner;
+
+
+            const values = [
+                enquiry.enquiry_code,
+                enquiry.status,
+                enquiry.room_preference,
+                student?.name,
+                student?.mobile,
+                hostel?.hostel_name,
+                hostel?.address,
+                owner?.name,
+                owner?.mobile,
+                owner?.email
+            ];
+
+
+            return values.some(value =>
+                String(value || "")
+                    .toLowerCase()
+                    .includes(search)
+            );
+        });
+    }
+
+
+    if (records.length === 0) {
+
+        results.innerHTML = `
+            <div style="
+                padding:30px;
+                text-align:center;
+                color:#6b7280;
+                background:#f9fafb;
+                border-radius:10px;
+            ">
+                No matching enquiries found.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    results.innerHTML =
+        records.map(record => {
+
+            const e =
+                record.enquiry;
+
+            const student =
+                record.student;
+
+            const hostel =
+                record.hostel;
+
+            const owner =
+                record.owner;
+
+
+            return `
+                <div style="
+                    padding:20px;
+                    margin-bottom:14px;
+                    border:1px solid #e5e7eb;
+                    border-radius:12px;
+                    background:white;
+                ">
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        gap:15px;
+                        align-items:flex-start;
+                    ">
+
+                        <div>
+
+                            <div style="
+                                font-size:18px;
+                                font-weight:700;
+                                color:#111827;
+                            ">
+                                ${e.enquiry_code || "Enquiry"}
+                            </div>
+
+                            <div style="
+                                margin-top:7px;
+                                font-size:15px;
+                                color:#374151;
+                            ">
+                                👨‍🎓
+                                ${student?.name || "Student not found"}
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                color:#6b7280;
+                            ">
+                                📱 ${student?.mobile || "—"}
+                            </div>
+
+                        </div>
+
+
+                        <span style="
+                            padding:6px 10px;
+                            border-radius:7px;
+                            background:#f3f4f6;
+                            font-size:12px;
+                            font-weight:700;
+                        ">
+                            ${e.status || "—"}
+                        </span>
+
+                    </div>
+
+
+                    <div style="
+                        margin-top:18px;
+                        display:grid;
+                        grid-template-columns:repeat(2,minmax(0,1fr));
+                        gap:10px;
+                    ">
+
+                        <div style="
+                            padding:12px;
+                            background:#f9fafb;
+                            border-radius:8px;
+                        ">
+                            <div style="
+                                font-size:12px;
+                                color:#6b7280;
+                            ">
+                                Hostel
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                font-weight:600;
+                            ">
+                                ${hostel?.hostel_name || "—"}
+                            </div>
+                        </div>
+
+
+                        <div style="
+                            padding:12px;
+                            background:#f9fafb;
+                            border-radius:8px;
+                        ">
+                            <div style="
+                                font-size:12px;
+                                color:#6b7280;
+                            ">
+                                Owner
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                font-weight:600;
+                            ">
+                                ${owner?.name || "Not linked"}
+                            </div>
+                        </div>
+
+
+                        <div style="
+                            padding:12px;
+                            background:#f9fafb;
+                            border-radius:8px;
+                        ">
+                            <div style="
+                                font-size:12px;
+                                color:#6b7280;
+                            ">
+                                Joining Date
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                font-weight:600;
+                            ">
+                                ${e.joining_date || "—"}
+                            </div>
+                        </div>
+
+
+                        <div style="
+                            padding:12px;
+                            background:#f9fafb;
+                            border-radius:8px;
+                        ">
+                            <div style="
+                                font-size:12px;
+                                color:#6b7280;
+                            ">
+                                Room Preference
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                font-weight:600;
+                            ">
+                                ${e.room_preference || "—"}
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div style="
+                        margin-top:14px;
+                        padding:12px;
+                        background:#f9fafb;
+                        border-radius:8px;
+                        color:#6b7280;
+                        font-size:13px;
+                    ">
+
+                        Owner Action:
+                        ${e.owner_action || "—"}
+
+                        <br>
+
+                        Owner Action Time:
+                        ${
+                            e.owner_action_at
+                                ? new Date(
+                                    e.owner_action_at
+                                  ).toLocaleString()
+                                : "—"
+                        }
+
+                        <br>
+
+                        Student Joined:
+                        ${
+                            e.student_joined_at
+                                ? new Date(
+                                    e.student_joined_at
+                                  ).toLocaleString()
+                                : "—"
+                        }
+
+                    </div>
+
+
+                    <div style="
+                        margin-top:14px;
+                    ">
+
+                        <button
+                            onclick="viewAdminEnquiryRecord(${e.id})"
+                            style="
+                                border:none;
+                                background:#2563eb;
+                                color:white;
+                                padding:9px 14px;
+                                border-radius:7px;
+                                cursor:pointer;
+                                font-weight:600;
+                            "
+                        >
+                            View Full Record
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+        }).join("");
+}
+
+
+async function viewAdminEnquiryRecord(enquiryId) {
+
+    const results =
+        document.getElementById("adminEnquiryResults");
+
+    if (!results) {
+        return;
+    }
+
+
+    results.innerHTML =
+        "Loading complete enquiry record...";
+
+
+    const { data: enquiry, error: enquiryError } =
+        await supabaseClient
+            .from("enquiries")
+            .select(`
+                id,
+                enquiry_code,
+                joining_date,
+                room_preference,
+                status,
+                owner_action,
+                owner_action_at,
+                student_joined_at,
+                joined_confirmed_by_owner,
+                student_id,
+                hostel_directory_id
+            `)
+            .eq("id", enquiryId)
+            .single();
+
+
+    if (enquiryError) {
+
+        console.error(
+            "FULL ENQUIRY ERROR:",
+            enquiryError
+        );
+
+        results.innerHTML =
+            "Unable to load enquiry record.";
+
+        return;
+    }
+
+
+    const { data: student } =
+        await supabaseClient
+            .from("students")
+            .select(`
+                id,
+                name,
+                mobile
+            `)
+            .eq("id", enquiry.student_id)
+            .single();
+
+
+    const { data: hostel } =
+        await supabaseClient
+            .from("hostel_directory")
+            .select(`
+                id,
+                hostel_name,
+                address,
+                property_type,
+                room_type,
+                rent_monthly,
+                ac_available,
+                balcony_available,
+                food_available,
+                wifi_available,
+                availability_status,
+                claimed_by_owner_id
+            `)
+            .eq("id", enquiry.hostel_directory_id)
+            .single();
+
+
+    let owner = null;
+
+
+    if (hostel?.claimed_by_owner_id) {
+
+        const ownerResult =
+            await supabaseClient
+                .from("owners")
+                .select(`
+                    id,
+                    name,
+                    mobile,
+                    email
+                `)
+                .eq(
+                    "id",
+                    hostel.claimed_by_owner_id
+                )
+                .single();
+
+        owner =
+            ownerResult.data || null;
+    }
+
+
+    results.innerHTML = `
+
+        <div style="
+            background:white;
+            padding:25px;
+            border:1px solid #e5e7eb;
+            border-radius:14px;
+        ">
+
+            <button
+                onclick="searchAdminEnquiries()"
+                style="
+                    border:none;
+                    background:#f3f4f6;
+                    padding:8px 12px;
+                    border-radius:7px;
+                    cursor:pointer;
+                    margin-bottom:20px;
+                "
+            >
+                ← Back to Enquiries
+            </button>
+
+
+            <h2>
+                ${enquiry.enquiry_code || "Enquiry Record"}
+            </h2>
+
+
+            <hr style="
+                margin:20px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+            ">
+
+
+            <h3>👨‍🎓 Student</h3>
+
+            <div style="
+                margin-top:10px;
+                line-height:1.8;
+            ">
+                Name:
+                ${student?.name || "—"}
+                <br>
+
+                Mobile:
+                ${student?.mobile || "—"}
+                <br>
+
+                Student ID:
+                ${enquiry.student_id || "—"}
+            </div>
+
+
+            <hr style="
+                margin:20px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+            ">
+
+
+            <h3>📩 Enquiry</h3>
+
+            <div style="
+                margin-top:10px;
+                line-height:1.8;
+            ">
+                Enquiry ID:
+                ${enquiry.enquiry_code || "—"}
+                <br>
+
+                Status:
+                ${enquiry.status || "—"}
+                <br>
+
+                Joining Date:
+                ${enquiry.joining_date || "—"}
+                <br>
+
+                Room Preference:
+                ${enquiry.room_preference || "—"}
+                <br>
+
+                Owner Action:
+                ${enquiry.owner_action || "—"}
+                <br>
+
+                Owner Action Time:
+                ${
+                    enquiry.owner_action_at
+                        ? new Date(
+                            enquiry.owner_action_at
+                          ).toLocaleString()
+                        : "—"
+                }
+                <br>
+
+                Student Joined:
+                ${
+                    enquiry.student_joined_at
+                        ? new Date(
+                            enquiry.student_joined_at
+                          ).toLocaleString()
+                        : "—"
+                }
+                <br>
+
+                Joined Confirmed:
+                ${
+                    enquiry.joined_confirmed_by_owner
+                        ? "Yes"
+                        : "No"
+                }
+            </div>
+
+
+            <hr style="
+                margin:20px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+            ">
+
+
+            <h3>🏠 Hostel</h3>
+
+            <div style="
+                margin-top:10px;
+                line-height:1.8;
+            ">
+                Name:
+                ${hostel?.hostel_name || "—"}
+                <br>
+
+                Address:
+                ${hostel?.address || "—"}
+                <br>
+
+                Type:
+                ${hostel?.property_type || "—"}
+                <br>
+
+                Room Type:
+                ${hostel?.room_type || "—"}
+                <br>
+
+                Rent:
+                ${
+                    hostel?.rent_monthly
+                        ? "₹" + hostel.rent_monthly
+                        : "—"
+                }
+                <br>
+
+                AC:
+                ${adminYesNo(hostel?.ac_available)}
+                <br>
+
+                Balcony:
+                ${adminYesNo(hostel?.balcony_available)}
+                <br>
+
+                Food:
+                ${adminYesNo(hostel?.food_available)}
+                <br>
+
+                Wi-Fi:
+                ${adminYesNo(hostel?.wifi_available)}
+                <br>
+
+                Availability:
+                ${hostel?.availability_status || "—"}
+            </div>
+
+
+            <hr style="
+                margin:20px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+            ">
+
+
+            <h3>👤 Owner</h3>
+
+            <div style="
+                margin-top:10px;
+                line-height:1.8;
+            ">
+                Name:
+                ${owner?.name || "Not linked"}
+                <br>
+
+                Mobile:
+                ${owner?.mobile || "—"}
+                <br>
+
+                Email:
+                ${owner?.email || "—"}
+            </div>
+
+        </div>
+    `;
+}
+
+
+function adminYesNo(value) {
+
+    if (value === true) {
+        return "Yes";
+    }
+
+    if (value === false) {
+        return "No";
+    }
+
+    return "—";
+}
+
+
+document
+    .getElementById("enquiriesNavButton")
+    .addEventListener(
+        "click",
+        openEnquiryManagement
+    );function openCommissionManagement() {
+
+    const oldPanel =
+        document.getElementById("commissionManagementPanel");
+
+    if (oldPanel) {
+        oldPanel.remove();
+    }
+
+    const panel = document.createElement("div");
+
+    panel.id = "commissionManagementPanel";
+
+    panel.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:#f4f7fb;
+        z-index:9999;
+        overflow:auto;
+        padding:30px;
+    `;
+
+    panel.innerHTML = `
+        <div style="
+            max-width:1250px;
+            margin:0 auto;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                margin-bottom:25px;
+            ">
+
+                <div>
+                    <h1 style="
+                        margin:0;
+                        font-size:28px;
+                        color:#111827;
+                    ">
+                        💰 Commission Management
+                    </h1>
+
+                    <p style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        View verified joining commissions and payment records.
+                    </p>
+                </div>
+
+                <button
+                    onclick="closeCommissionManagement()"
+                    style="
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        padding:10px 16px;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    ← Back to Dashboard
+                </button>
+
+            </div>
+
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(3,1fr);
+                gap:15px;
+                margin-bottom:20px;
+            ">
+
+                <div style="
+                    background:white;
+                    padding:20px;
+                    border:1px solid #e5e7eb;
+                    border-radius:12px;
+                ">
+                    <div style="color:#6b7280;font-size:13px;">
+                        Total Commission
+                    </div>
+
+                    <div
+                        id="commissionTotal"
+                        style="
+                            margin-top:8px;
+                            font-size:25px;
+                            font-weight:800;
+                        "
+                    >
+                        ₹0
+                    </div>
+                </div>
+
+
+                <div style="
+                    background:white;
+                    padding:20px;
+                    border:1px solid #e5e7eb;
+                    border-radius:12px;
+                ">
+                    <div style="color:#6b7280;font-size:13px;">
+                        Due
+                    </div>
+
+                    <div
+                        id="commissionDueTotal"
+                        style="
+                            margin-top:8px;
+                            font-size:25px;
+                            font-weight:800;
+                        "
+                    >
+                        ₹0
+                    </div>
+                </div>
+
+
+                <div style="
+                    background:white;
+                    padding:20px;
+                    border:1px solid #e5e7eb;
+                    border-radius:12px;
+                ">
+                    <div style="color:#6b7280;font-size:13px;">
+                        Paid
+                    </div>
+
+                    <div
+                        id="commissionPaidTotal"
+                        style="
+                            margin-top:8px;
+                            font-size:25px;
+                            font-weight:800;
+                        "
+                    >
+                        ₹0
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div style="
+                background:white;
+                padding:22px;
+                border:1px solid #e5e7eb;
+                border-radius:14px;
+            ">
+
+                <h3 style="margin-bottom:16px;">
+                    Commission Records
+                </h3>
+
+                <div id="commissionRecords">
+                    Loading commission records...
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    loadCommissionRecords();
+}
+
+
+function closeCommissionManagement() {
+
+    const panel =
+        document.getElementById("commissionManagementPanel");
+
+    if (panel) {
+        panel.remove();
+    }
+}
+
+
+async function loadCommissionRecords() {
+
+    const container =
+        document.getElementById("commissionRecords");
+
+    if (!container) {
+        return;
+    }
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("commissions")
+            .select(`
+                id,
+                enquiry_id,
+                owner_id,
+                amount,
+                status,
+                created_at,
+                verified_at,
+                paid_at,
+                payment_reference,
+                payment_method,
+                admin_notes
+            `)
+            .order("id", {
+                ascending: false
+            })
+            .limit(200);
+
+
+    if (error) {
+
+        console.error(
+            "COMMISSION LOAD ERROR:",
+            error
+        );
+
+        container.innerHTML = `
+            <div style="
+                padding:18px;
+                background:#fef2f2;
+                color:#dc2626;
+                border-radius:10px;
+            ">
+                Unable to load commission records.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const records =
+        data || [];
+
+
+    let total = 0;
+    let due = 0;
+    let paid = 0;
+
+
+    records.forEach(record => {
+
+        const amount =
+            Number(record.amount || 0);
+
+        total += amount;
+
+        if (
+            record.status === "due" ||
+            record.status === "verified"
+        ) {
+            due += amount;
+        }
+
+        if (record.status === "paid") {
+            paid += amount;
+        }
+    });
+
+
+    document.getElementById("commissionTotal").textContent =
+        "₹" + total;
+
+    document.getElementById("commissionDueTotal").textContent =
+        "₹" + due;
+
+    document.getElementById("commissionPaidTotal").textContent =
+        "₹" + paid;
+
+
+    if (records.length === 0) {
+
+        container.innerHTML = `
+            <div style="
+                padding:30px;
+                text-align:center;
+                color:#6b7280;
+                background:#f9fafb;
+                border-radius:10px;
+            ">
+                No commission records found yet.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML = records.map(record => `
+
+        <div style="
+            padding:18px;
+            margin-bottom:12px;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            background:#ffffff;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                gap:15px;
+            ">
+
+                <div>
+
+                    <div style="
+                        font-size:17px;
+                        font-weight:700;
+                    ">
+                        Commission #${record.id}
+                    </div>
+
+                    <div style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        Enquiry ID:
+                        ${record.enquiry_id || "—"}
+                    </div>
+
+                    <div style="
+                        margin-top:4px;
+                        color:#6b7280;
+                    ">
+                        Owner ID:
+                        ${record.owner_id || "—"}
+                    </div>
+
+                </div>
+
+
+                <div style="
+                    font-size:20px;
+                    font-weight:800;
+                ">
+                    ₹${record.amount || 0}
+                </div>
+
+            </div>
+
+
+            <div style="
+                margin-top:12px;
+                display:grid;
+                grid-template-columns:repeat(2,1fr);
+                gap:10px;
+            ">
+
+                <div style="
+                    padding:10px;
+                    background:#f9fafb;
+                    border-radius:8px;
+                ">
+                    Status:
+                    <strong>
+                        ${record.status || "—"}
+                    </strong>
+                </div>
+
+                <div style="
+                    padding:10px;
+                    background:#f9fafb;
+                    border-radius:8px;
+                ">
+                    Payment:
+                    ${record.payment_method || "—"}
+                </div>
+
+                <div style="
+                    padding:10px;
+                    background:#f9fafb;
+                    border-radius:8px;
+                ">
+                    Created:
+                    ${
+                        record.created_at
+                            ? new Date(
+                                record.created_at
+                              ).toLocaleString()
+                            : "—"
+                    }
+                </div>
+
+                <div style="
+                    padding:10px;
+                    background:#f9fafb;
+                    border-radius:8px;
+                ">
+                    Paid:
+                    ${
+                        record.paid_at
+                            ? new Date(
+                                record.paid_at
+                              ).toLocaleString()
+                            : "—"
+                    }
+                </div>
+
+            </div>
+
+
+            ${
+                record.payment_reference
+                    ? `
+                        <div style="
+                            margin-top:10px;
+                            color:#6b7280;
+                        ">
+                            Payment Reference:
+                            ${record.payment_reference}
+                        </div>
+                    `
+                    : ""
+            }
+
+
+            ${
+                record.admin_notes
+                    ? `
+                        <div style="
+                            margin-top:10px;
+                            color:#6b7280;
+                        ">
+                            Admin Notes:
+                            ${record.admin_notes}
+                        </div>
+                    `
+                    : ""
+            }
+
+        </div>
+
+    `).join("");
+}
+
+
+document
+    .getElementById("commissionNavButton")
+    .addEventListener(
+        "click",
+        openCommissionManagement
+    );function openActivityLog() {
+
+    const oldPanel =
+        document.getElementById("activityLogPanel");
+
+    if (oldPanel) {
+        oldPanel.remove();
+    }
+
+    const panel = document.createElement("div");
+
+    panel.id = "activityLogPanel";
+
+    panel.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:#f4f7fb;
+        z-index:9999;
+        overflow:auto;
+        padding:30px;
+    `;
+
+    panel.innerHTML = `
+        <div style="
+            max-width:1200px;
+            margin:0 auto;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                margin-bottom:25px;
+            ">
+
+                <div>
+                    <h1 style="
+                        margin:0;
+                        font-size:28px;
+                        color:#111827;
+                    ">
+                        📜 Activity Log
+                    </h1>
+
+                    <p style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        Complete record of important platform actions.
+                    </p>
+                </div>
+
+                <button
+                    onclick="closeActivityLog()"
+                    style="
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        padding:10px 16px;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    ← Back to Dashboard
+                </button>
+
+            </div>
+
+
+            <div style="
+                background:white;
+                padding:22px;
+                border:1px solid #e5e7eb;
+                border-radius:14px;
+            ">
+
+                <div style="
+                    display:flex;
+                    gap:10px;
+                    flex-wrap:wrap;
+                    margin-bottom:20px;
+                ">
+
+                    <select
+                        id="activityEntityFilter"
+                        onchange="loadActivityLogs()"
+                        style="
+                            padding:12px;
+                            border:1px solid #d1d5db;
+                            border-radius:8px;
+                            background:white;
+                        "
+                    >
+                        <option value="">All Types</option>
+                        <option value="student">Student</option>
+                        <option value="hostel">Hostel</option>
+                        <option value="owner">Owner</option>
+                        <option value="enquiry">Enquiry</option>
+                        <option value="claim">Claim</option>
+                        <option value="commission">Commission</option>
+                    </select>
+
+                    <button
+                        onclick="loadActivityLogs()"
+                        style="
+                            padding:12px 18px;
+                            border:none;
+                            border-radius:8px;
+                            background:#2563eb;
+                            color:white;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                    >
+                        Refresh
+                    </button>
+
+                </div>
+
+
+                <div id="activityLogResults">
+                    Loading activity logs...
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    loadActivityLogs();
+}
+
+
+function closeActivityLog() {
+
+    const panel =
+        document.getElementById("activityLogPanel");
+
+    if (panel) {
+        panel.remove();
+    }
+}
+
+
+async function loadActivityLogs() {
+
+    const container =
+        document.getElementById("activityLogResults");
+
+    const filter =
+        document.getElementById("activityEntityFilter");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML =
+        "Loading activity logs...";
+
+
+    let query =
+        supabaseClient
+            .from("activity_logs")
+            .select(`
+                id,
+                actor_user_id,
+                action,
+                entity_type,
+                entity_id,
+                description,
+                metadata,
+                logged_at
+            `)
+            .order("logged_at", {
+                ascending: false
+            })
+            .limit(200);
+
+
+    if (filter && filter.value) {
+
+        query =
+            query.eq(
+                "entity_type",
+                filter.value
+            );
+    }
+
+
+    const { data, error } =
+        await query;
+
+
+    if (error) {
+
+        console.error(
+            "ACTIVITY LOG ERROR:",
+            error
+        );
+
+        container.innerHTML = `
+            <div style="
+                padding:20px;
+                background:#fef2f2;
+                color:#dc2626;
+                border-radius:10px;
+            ">
+                Unable to load activity logs.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+        container.innerHTML = `
+            <div style="
+                padding:30px;
+                text-align:center;
+                background:#f9fafb;
+                color:#6b7280;
+                border-radius:10px;
+            ">
+                No activity logs found yet.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        data.map(log => `
+
+            <div style="
+                padding:16px;
+                margin-bottom:10px;
+                border:1px solid #e5e7eb;
+                border-radius:10px;
+                background:white;
+            ">
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    gap:15px;
+                    align-items:flex-start;
+                ">
+
+                    <div>
+
+                        <div style="
+                            font-size:16px;
+                            font-weight:700;
+                            color:#111827;
+                        ">
+                            ${log.action || "Action"}
+                        </div>
+
+                        <div style="
+                            margin-top:5px;
+                            color:#374151;
+                        ">
+                            ${log.description || "No description"}
+                        </div>
+
+                    </div>
+
+
+                    <div style="
+                        font-size:12px;
+                        color:#6b7280;
+                        white-space:nowrap;
+                    ">
+                        ${
+                            log.logged_at
+                                ? new Date(
+                                    log.logged_at
+                                  ).toLocaleString()
+                                : "—"
+                        }
+                    </div>
+
+                </div>
+
+
+                <div style="
+                    margin-top:10px;
+                    color:#6b7280;
+                    font-size:13px;
+                ">
+
+                    Type:
+                    ${log.entity_type || "—"}
+
+                    · ID:
+                    ${log.entity_id || "—"}
+
+                </div>
+
+            </div>
+
+        `).join("");
+}
+
+
+document
+    .getElementById("activityLogNavButton")
+    .addEventListener(
+        "click",
+        openActivityLog
+    );function openSettingsPanel() {
+
+    const oldPanel =
+        document.getElementById("settingsManagementPanel");
+
+    if (oldPanel) {
+        oldPanel.remove();
+    }
+
+    const panel = document.createElement("div");
+
+    panel.id = "settingsManagementPanel";
+
+    panel.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:#f4f7fb;
+        z-index:9999;
+        overflow:auto;
+        padding:30px;
+    `;
+
+    panel.innerHTML = `
+        <div style="
+            max-width:800px;
+            margin:0 auto;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                margin-bottom:25px;
+            ">
+
+                <div>
+                    <h1 style="
+                        margin:0;
+                        font-size:28px;
+                        color:#111827;
+                    ">
+                        ⚙️ Admin Settings
+                    </h1>
+
+                    <p style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        Manage your admin account and security.
+                    </p>
+                </div>
+
+                <button
+                    onclick="closeSettingsPanel()"
+                    style="
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        padding:10px 16px;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    ← Back to Dashboard
+                </button>
+
+            </div>
+
+
+            <div style="
+                background:white;
+                padding:25px;
+                border:1px solid #e5e7eb;
+                border-radius:14px;
+                margin-bottom:20px;
+            ">
+
+                <h3 style="
+                    margin-bottom:15px;
+                ">
+                    👤 Account Information
+                </h3>
+
+                <div
+                    id="adminAccountEmail"
+                    style="
+                        padding:13px;
+                        background:#f9fafb;
+                        border-radius:8px;
+                        color:#374151;
+                    "
+                >
+                    Loading account...
+                </div>
+
+                <div style="
+                    margin-top:12px;
+                    padding:13px;
+                    background:#f9fafb;
+                    border-radius:8px;
+                    color:#374151;
+                ">
+                    Role: <strong>Administrator</strong>
+                </div>
+
+            </div>
+
+
+            <div style="
+                background:white;
+                padding:25px;
+                border:1px solid #e5e7eb;
+                border-radius:14px;
+            ">
+
+                <h3 style="
+                    margin-bottom:8px;
+                ">
+                    🔐 Change Password
+                </h3>
+
+                <p style="
+                    color:#6b7280;
+                    font-size:14px;
+                    margin-bottom:20px;
+                ">
+                    Enter a new password for your admin account.
+                </p>
+
+
+                <label style="
+                    display:block;
+                    margin-bottom:7px;
+                    font-weight:600;
+                ">
+                    New Password
+                </label>
+
+                <input
+                    id="newAdminPassword"
+                    type="password"
+                    placeholder="Enter new password"
+                    style="
+                        width:100%;
+                        padding:13px;
+                        border:1px solid #d1d5db;
+                        border-radius:9px;
+                        font-size:14px;
+                        outline:none;
+                    "
+                >
+
+
+                <label style="
+                    display:block;
+                    margin-top:16px;
+                    margin-bottom:7px;
+                    font-weight:600;
+                ">
+                    Confirm New Password
+                </label>
+
+                <input
+                    id="confirmAdminPassword"
+                    type="password"
+                    placeholder="Confirm new password"
+                    style="
+                        width:100%;
+                        padding:13px;
+                        border:1px solid #d1d5db;
+                        border-radius:9px;
+                        font-size:14px;
+                        outline:none;
+                    "
+                >
+
+
+                <button
+                    onclick="changeAdminPassword()"
+                    style="
+                        margin-top:18px;
+                        border:none;
+                        background:#2563eb;
+                        color:white;
+                        padding:12px 18px;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    Update Password
+                </button>
+
+
+                <div
+                    id="passwordChangeMessage"
+                    style="
+                        margin-top:14px;
+                        min-height:20px;
+                        font-size:14px;
+                    "
+                ></div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    loadAdminAccountInfo();
+}
+
+
+function closeSettingsPanel() {
+
+    const panel =
+        document.getElementById("settingsManagementPanel");
+
+    if (panel) {
+        panel.remove();
+    }
+}
+
+
+async function loadAdminAccountInfo() {
+
+    const emailBox =
+        document.getElementById("adminAccountEmail");
+
+    if (!emailBox) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } = await supabaseClient.auth.getUser();
+
+    if (error || !data.user) {
+        emailBox.textContent =
+            "Unable to load account information.";
+        return;
+    }
+
+    emailBox.textContent =
+        data.user.email || "Email not available";
+}
+
+
+async function changeAdminPassword() {
+
+    const newPassword =
+        document.getElementById("newAdminPassword").value;
+
+    const confirmPassword =
+        document.getElementById("confirmAdminPassword").value;
+
+    const message =
+        document.getElementById("passwordChangeMessage");
+
+
+    if (!newPassword || !confirmPassword) {
+
+        message.textContent =
+            "Please fill both password fields.";
+
+        message.style.color =
+            "#dc2626";
+
+        return;
+    }
+
+
+    if (newPassword !== confirmPassword) {
+
+        message.textContent =
+            "Passwords do not match.";
+
+        message.style.color =
+            "#dc2626";
+
+        return;
+    }
+
+
+    if (newPassword.length < 8) {
+
+        message.textContent =
+            "Password must be at least 8 characters.";
+
+        message.style.color =
+            "#dc2626";
+
+        return;
+    }
+
+
+    message.textContent =
+        "Updating password...";
+
+    message.style.color =
+        "#6b7280";
+
+
+    const {
+        error
+    } = await supabaseClient.auth.updateUser({
+        password: newPassword
+    });
+
+
+    if (error) {
+
+        console.error(
+            "PASSWORD UPDATE ERROR:",
+            error
+        );
+
+        message.textContent =
+            "Password update failed.";
+
+        message.style.color =
+            "#dc2626";
+
+        return;
+    }
+
+
+    message.textContent =
+        "Password updated successfully.";
+
+    message.style.color =
+        "#16a34a";
+
+
+    document.getElementById(
+        "newAdminPassword"
+    ).value = "";
+
+    document.getElementById(
+        "confirmAdminPassword"
+    ).value = "";
+}
+
+
+document
+    .getElementById("settingsNavButton")
+    .addEventListener(
+        "click",
+        openSettingsPanel
+    );function openClaimsManagement() {
+
+    const oldPanel =
+        document.getElementById("claimsManagementPanel");
+
+    if (oldPanel) {
+        oldPanel.remove();
+    }
+
+    const panel = document.createElement("div");
+
+    panel.id = "claimsManagementPanel";
+
+    panel.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:#f4f7fb;
+        z-index:9999;
+        overflow:auto;
+        padding:30px;
+    `;
+
+    panel.innerHTML = `
+        <div style="
+            max-width:1250px;
+            margin:0 auto;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                margin-bottom:25px;
+            ">
+
+                <div>
+                    <h1 style="
+                        margin:0;
+                        font-size:28px;
+                        color:#111827;
+                    ">
+                        ✅ Hostel Claims Management
+                    </h1>
+
+                    <p style="
+                        margin-top:6px;
+                        color:#6b7280;
+                    ">
+                        Review, approve and reject hostel owner claims.
+                    </p>
+                </div>
+
+                <button
+                    onclick="closeClaimsManagement()"
+                    style="
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        padding:10px 16px;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+                    ← Back to Dashboard
+                </button>
+
+            </div>
+
+
+            <div style="
+                background:white;
+                padding:22px;
+                border:1px solid #e5e7eb;
+                border-radius:14px;
+            ">
+
+                <div style="
+                    display:flex;
+                    gap:10px;
+                    flex-wrap:wrap;
+                    margin-bottom:20px;
+                ">
+
+                    <select
+                        id="claimsStatusFilter"
+                        onchange="loadAllClaims()"
+                        style="
+                            padding:12px;
+                            border:1px solid #d1d5db;
+                            border-radius:8px;
+                            background:white;
+                        "
+                    >
+                        <option value="">All Claims</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+
+                    <button
+                        onclick="loadAllClaims()"
+                        style="
+                            padding:12px 18px;
+                            border:none;
+                            border-radius:8px;
+                            background:#2563eb;
+                            color:white;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                    >
+                        Refresh
+                    </button>
+
+                </div>
+
+
+                <div id="allClaimsResults">
+                    Loading claims...
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    loadAllClaims();
+}
+
+
+function closeClaimsManagement() {
+
+    const panel =
+        document.getElementById("claimsManagementPanel");
+
+    if (panel) {
+        panel.remove();
+    }
+}
+
+
+async function loadAllClaims() {
+
+    const container =
+        document.getElementById("allClaimsResults");
+
+    const filter =
+        document.getElementById("claimsStatusFilter");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "Loading claims...";
+
+
+    let query =
+        supabaseClient
+            .from("hostel_claim_requests")
+            .select(`
+                id,
+                hostel_id,
+                owner_name,
+                owner_mobile,
+                status,
+                submitted_at
+            `)
+            .order("id", {
+                ascending: false
+            })
+            .limit(200);
+
+
+    if (filter && filter.value) {
+
+        query =
+            query.eq(
+                "status",
+                filter.value
+            );
+    }
+
+
+    const { data, error } =
+        await query;
+
+
+    if (error) {
+
+        console.error(
+            "ALL CLAIMS ERROR:",
+            error
+        );
+
+        container.innerHTML = `
+            <div style="
+                padding:20px;
+                background:#fef2f2;
+                color:#dc2626;
+                border-radius:10px;
+            ">
+                Unable to load claims.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+        container.innerHTML = `
+            <div style="
+                padding:30px;
+                text-align:center;
+                color:#6b7280;
+                background:#f9fafb;
+                border-radius:10px;
+            ">
+                No claims found.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const hostelIds = [
+        ...new Set(
+            data
+                .map(claim => claim.hostel_id)
+                .filter(Boolean)
+        )
+    ];
+
+
+    let hostels = [];
+
+
+    if (hostelIds.length > 0) {
+
+        const hostelResult =
+            await supabaseClient
+                .from("hostel_directory")
+                .select(`
+                    id,
+                    hostel_name,
+                    address,
+                    management_status,
+                    verification_status
+                `)
+                .in("id", hostelIds);
+
+
+        if (!hostelResult.error) {
+            hostels =
+                hostelResult.data || [];
+        }
+    }
+
+
+    const hostelMap = {};
+
+    hostels.forEach(hostel => {
+        hostelMap[hostel.id] = hostel;
+    });
+
+
+    container.innerHTML =
+        data.map(claim => {
+
+            const hostel =
+                hostelMap[claim.hostel_id];
+
+
+            return `
+                <div style="
+                    padding:20px;
+                    margin-bottom:14px;
+                    border:1px solid #e5e7eb;
+                    border-radius:12px;
+                    background:white;
+                ">
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        gap:15px;
+                        align-items:flex-start;
+                    ">
+
+                        <div>
+
+                            <div style="
+                                font-size:18px;
+                                font-weight:700;
+                                color:#111827;
+                            ">
+                                Claim #${claim.id}
+                            </div>
+
+                            <div style="
+                                margin-top:7px;
+                                font-size:16px;
+                                font-weight:600;
+                            ">
+                                🏠
+                                ${hostel?.hostel_name || "Hostel not found"}
+                            </div>
+
+                            <div style="
+                                margin-top:5px;
+                                color:#6b7280;
+                            ">
+                                ${hostel?.address || "Address not available"}
+                            </div>
+
+                        </div>
+
+
+                        <span style="
+                            padding:6px 10px;
+                            border-radius:7px;
+                            background:#f3f4f6;
+                            font-size:12px;
+                            font-weight:700;
+                        ">
+                            ${claim.status || "pending"}
+                        </span>
+
+                    </div>
+
+
+                    <div style="
+                        margin-top:18px;
+                        display:grid;
+                        grid-template-columns:repeat(2,1fr);
+                        gap:10px;
+                    ">
+
+                        <div style="
+                            padding:12px;
+                            background:#f9fafb;
+                            border-radius:8px;
+                        ">
+                            <div style="
+                                font-size:12px;
+                                color:#6b7280;
+                            ">
+                                Owner Name
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                font-weight:600;
+                            ">
+                                ${claim.owner_name || "—"}
+                            </div>
+                        </div>
+
+
+                        <div style="
+                            padding:12px;
+                            background:#f9fafb;
+                            border-radius:8px;
+                        ">
+                            <div style="
+                                font-size:12px;
+                                color:#6b7280;
+                            ">
+                                Owner Mobile
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                font-weight:600;
+                            ">
+                                ${claim.owner_mobile || "—"}
+                            </div>
+                        </div>
+
+
+                        <div style="
+                            padding:12px;
+                            background:#f9fafb;
+                            border-radius:8px;
+                        ">
+                            <div style="
+                                font-size:12px;
+                                color:#6b7280;
+                            ">
+                                Submitted
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                font-weight:600;
+                            ">
+                                ${
+                                    claim.submitted_at
+                                        ? new Date(
+                                            claim.submitted_at
+                                          ).toLocaleString()
+                                        : "—"
+                                }
+                            </div>
+                        </div>
+
+
+                        <div style="
+                            padding:12px;
+                            background:#f9fafb;
+                            border-radius:8px;
+                        ">
+                            <div style="
+                                font-size:12px;
+                                color:#6b7280;
+                            ">
+                                Hostel Status
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                font-weight:600;
+                            ">
+                                ${
+                                    hostel?.management_status
+                                        || "—"
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    ${
+                        claim.status === "pending"
+                            ? `
+                                <div style="
+                                    display:flex;
+                                    gap:10px;
+                                    margin-top:16px;
+                                ">
+
+                                    <button
+                                        onclick="processAdminClaim(
+                                            ${claim.id},
+                                            'approved',
+                                            ${claim.hostel_id},
+                                            '${escapeAttribute(claim.owner_name || "")}',
+                                            '${escapeAttribute(claim.owner_mobile || "")}'
+                                        )"
+                                        style="
+                                            border:none;
+                                            background:#16a34a;
+                                            color:white;
+                                            padding:10px 16px;
+                                            border-radius:8px;
+                                            cursor:pointer;
+                                            font-weight:700;
+                                        "
+                                    >
+                                        ✓ Approve Claim
+                                    </button>
+
+
+                                    <button
+                                        onclick="processAdminClaim(
+                                            ${claim.id},
+                                            'rejected',
+                                            ${claim.hostel_id},
+                                            '',
+                                            ''
+                                        )"
+                                        style="
+                                            border:none;
+                                            background:#dc2626;
+                                            color:white;
+                                            padding:10px 16px;
+                                            border-radius:8px;
+                                            cursor:pointer;
+                                            font-weight:700;
+                                        "
+                                    >
+                                        ✕ Reject Claim
+                                    </button>
+
+                                </div>
+                            `
+                            : ""
+                    }
+
+                </div>
+            `;
+        }).join("");
+}
+
+
+function escapeAttribute(value) {
+
+    return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
+}
+
+
+async function processAdminClaim(
+    claimId,
+    newStatus,
+    hostelId,
+    ownerName,
+    ownerMobile
+) {
+
+    const action =
+        newStatus === "approved"
+            ? "approve"
+            : "reject";
+
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to " +
+            action +
+            " this claim?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    const { error: claimError } =
+        await supabaseClient
+            .from("hostel_claim_requests")
+            .update({
+                status: newStatus
+            })
+            .eq("id", claimId);
+
+
+    if (claimError) {
+
+        console.error(
+            "CLAIM UPDATE ERROR:",
+            claimError
+        );
+
+        alert(
+            "Claim update nahi ho paayi."
+        );
+
+        return;
+    }
+
+
+    if (newStatus === "approved") {
+
+        const { error: hostelError } =
+            await supabaseClient
+                .from("hostel_directory")
+                .update({
+                    management_status: "owner_managed",
+                    verification_status: "owner_claimed",
+                    claimed_owner_name: ownerName,
+                    claimed_owner_mobile: ownerMobile,
+                    owner_mobile_verified: false,
+                    claimed_at: new Date().toISOString()
+                })
+                .eq("id", hostelId);
+
+
+        if (hostelError) {
+
+            console.error(
+                "HOSTEL CLAIM LINK ERROR:",
+                hostelError
+            );
+
+            alert(
+                "Claim approved, but hostel record update failed."
+            );
+
+            loadAllClaims();
+
+            return;
+        }
+    }
+
+
+    alert(
+        newStatus === "approved"
+            ? "Claim approved successfully."
+            : "Claim rejected successfully."
+    );
+
+
+    loadAllClaims();
+
+    loadRecentClaims();
+}
+
+
+document
+    .getElementById("claimsNavButton")
+    .addEventListener(
+        "click",
+        openClaimsManagement
+    );/* LOGOUT */
+
+document
+    .getElementById("logoutButton")
+    .addEventListener("click", async function() {
+
+        await supabaseClient.auth.signOut();
+
+        window.location.href = "admin.html";
+
+    });
+
+
+loadAdminStats()/* START */
+
+checkAdminAccess();
+async function loadAdminStats() {
+
+    const queries = await Promise.all([
+        supabaseClient
+            .from("students")
+            .select("*", { count: "exact", head: true }),
+
+        supabaseClient
+            .from("hostel_directory")
+            .select("*", { count: "exact", head: true })
+            .eq("is_active", true),
+
+        supabaseClient
+            .from("owners")
+            .select("*", { count: "exact", head: true }),
+
+        supabaseClient
+            .from("enquiries")
+            .select("*", { count: "exact", head: true }),
+
+        supabaseClient
+            .from("enquiries")
+            .select("*", { count: "exact", head: true })
+            .eq("status", "verified"),
+
+        supabaseClient
+            .from("enquiries")
+            .select("*", { count: "exact", head: true })
+            .eq("status", "pending"),
+
+        supabaseClient
+            .from("hostel_claim_requests")
+            .select("*", { count: "exact", head: true })
+            .eq("status", "pending")
+    ]);
+
+    const [
+        students,
+        hostels,
+        owners,
+        enquiries,
+        verifiedJoinings,
+        pendingEnquiries,
+        pendingClaims
+    ] = queries;
+
+
+    document.getElementById("totalStudents").textContent =
+        students.count ?? 0;
+
+    document.getElementById("totalHostels").textContent =
+        hostels.count ?? 0;
+
+    document.getElementById("totalOwners").textContent =
+        owners.count ?? 0;
+
+    document.getElementById("totalEnquiries").textContent =
+        enquiries.count ?? 0;
+
+    document.getElementById("verifiedJoinings").textContent =
+        verifiedJoinings.count ?? 0;
+
+    document.getElementById("pendingEnquiries").textContent =
+        pendingEnquiries.count ?? 0;
+
+    document.getElementById("pendingClaims").textContent =
+        pendingClaims.count ?? 0;
+}
+async function loadRecentEnquiries() {
+    const container = document.getElementById("adminRecentEnquiries");
+
+    if (!container) {
+        console.error("adminRecentEnquiries container not found");
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("enquiries")
+        .select(`
+            id,
+            enquiry_code,
+            joining_date,
+            room_preference,
+           status,
+student_id,
+hostel_directory_id
+        `)
+        .order("id", { ascending: false })
+        .limit(10);
+
+    if (error) {
+        console.error("ADMIN ENQUIRIES ERROR:", error);
+        container.innerHTML = `
+            <div style="
+                padding:20px;
+                color:#dc2626;
+                background:#fef2f2;
+                border-radius:12px;
+            ">
+                Unable to load enquiries.
+            </div>
+        `;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        container.innerHTML = `
+            <div style="
+                padding:20px;
+                color:#6b7280;
+                text-align:center;
+            ">
+                No enquiries found.
+            </div>
+        `;
+        return;
+    }
+
+    const studentIds = [...new Set(
+        data
+            .map(e => e.student_id)
+            .filter(Boolean)
+    )];
+
+    let students = [];
+
+    if (studentIds.length > 0) {
+        const { data: studentData, error: studentError } =
+            await supabaseClient
+                .from("students")
+                .select("id, name, mobile")
+                .in("id", studentIds);
+
+        if (!studentError) {
+            students = studentData || [];
+        } else {
+            console.error("ADMIN STUDENTS ERROR:", studentError);
+        }
+    }
+
+    const studentMap = {};
+    students.forEach(student => {
+        studentMap[student.id] = student;
+    });
+
+    container.innerHTML = data.map(e => {
+        const student = studentMap[e.student_id];
+
+        return `
+            <div style="
+                padding:16px;
+                margin-bottom:12px;
+                border:1px solid #e5e7eb;
+                border-radius:12px;
+                background:#ffffff;
+            ">
+                <div style="
+                    font-size:16px;
+                    font-weight:700;
+                    color:#111827;
+                ">
+                    ${e.enquiry_code || "Enquiry"}
+                </div>
+
+                <div style="margin-top:6px;color:#374151;">
+                    Student:
+                    ${student?.name || "—"}
+                </div>
+
+                <div style="margin-top:4px;color:#374151;">
+                    Mobile:
+                    ${student?.mobile || "—"}
+                </div>
+
+                <div style="margin-top:4px;color:#6b7280;">
+                    Joining:
+                    ${e.joining_date || "—"}
+                </div>
+
+                <div style="margin-top:4px;color:#6b7280;">
+                    Room:
+                    ${e.room_preference || "—"}
+                </div>
+
+                <div style="margin-top:4px;color:#6b7280;">
+                    Status:
+                    ${e.status || "—"}
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+loadRecentEnquiries();
+loadAdminStats();
+</script>
+
+</body>
+</html>

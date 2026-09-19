@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - Where Is My Hostel?</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .owner-label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 65px);
+        }
+
+        .sidebar {
+            width: 230px;
+            background: #111827;
+            padding: 25px 15px;
+        }
+
+        .sidebar button {
+            width: 100%;
+            padding: 13px 15px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #d1d5db;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .sidebar button:hover,
+        .sidebar button.active {
+            background: #374151;
+            color: white;
+        }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .stat-card .label {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 180px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                display: flex;
+                overflow-x: auto;
+            }
+
+            .sidebar button {
+                min-width: 140px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="logo">Where Is My Hostel?</div>
+        <div class="owner-label">Owner Portal</div>
+    </header>
+
+    <div class="layout">
+
+        <aside class="sidebar">
+            <button class="active">Overview</button>
+            <button>My Properties</button>
+            <button>Enquiries</button>
+            <button>Add Property</button>
+            <button>Commission</button>
+            <button>Account & Settings</button>
+        </aside>
+<section style="margin-top:30px;">
+
+    <h2 style="font-size:22px; margin-bottom:8px;">
+        Recent Enquiries
+    </h2>
+
+    <p style="color:#6b7280; margin-bottom:18px;">
+        Student enquiries for your hostel will appear here.
+    </p>
+
+    <div style="
+        background:white;
+        border:1px solid #e5e7eb;
+        border-radius:12px;
+        overflow:hidden;
+    ">
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+        ">
+
+            <thead>
+                <tr style="background:#f9fafb;">
+                    <th style="padding:14px; text-align:left;">Enquiry ID</th>
+                    <th style="padding:14px; text-align:left;">Student</th>
+                    <th style="padding:14px; text-align:left;">Joining Date</th>
+                    <th style="padding:14px; text-align:left;">Room</th>
+                    <th style="padding:14px; text-align:left;">Status</th>
+                    <th style="padding:14px; text-align:left;">Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="ownerEnquiries">
+                <tr>
+                    <td colspan="6" style="
+                        padding:30px;
+                        text-align:center;
+                        color:#6b7280;
+                    ">
+                        Loading enquiries...
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+       <section style="margin-top:30px;">
+
+    <h2 style="font-size:22px; margin-bottom:8px;">
+        My Properties
+    </h2>
+
+    <p style="color:#6b7280; margin-bottom:18px;">
+        Manage your hostel or PG listings.
+    </p>
+
+    <div style="
+        background:white;
+        border:1px solid #e5e7eb;
+        border-radius:12px;
+        padding:22px;
+    ">
+
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:15px;
+            flex-wrap:wrap;
+        ">
+
+            <div>
+                <h3 style="font-size:18px; margin-bottom:6px;">
+                    No property added yet
+                </h3>
+
+                <p style="color:#6b7280; font-size:14px;">
+                    Add or claim your hostel to start receiving student enquiries.
+                </p>
+            </div>
+
+            <button
+                onclick="addProperty()"
+                style="
+                    border:none;
+                    background:#111827;
+                    color:white;
+                    padding:11px 18px;
+                    border-radius:8px;
+                    cursor:pointer;
+                    font-weight:600;
+                "
+            >
+                + Add My Property
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+ <main class="content">
+
+            <h1 class="page-title">Owner Dashboard</h1>
+
+            <p class="subtitle">
+                Manage your hostel, enquiries and property information.
+            </p>
+
+            <div class="stats">
+
+                <div class="stat-card">
+                    <div class="label">My Properties</div>
+                    <div class="value">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="label">New Enquiries</div>
+                    <div class="value">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="label">Students Joined</div>
+                    <div class="value">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="label">Commission Due</div>
+                    <div class="value">₹0</div>
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://amjibqiukwkvcvgxucqg.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_fg49DIWK7aq1NGe9_RoRGA_hXiYq5CV";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
+
+console.log("Owner Portal → Supabase connected");
+</script>
+<script>
+async function loadOwnerEnquiries() {
+
+    const {
+        data: { user },
+        error: authError
+    } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+        console.error("OWNER AUTH ERROR:", authError);
+        return;
+    }
+
+    // Find the owner record for the logged-in account
+    const { data: owner, error: ownerError } = await supabaseClient
+        .from("owners")
+        .select("id")
+        .eq("auth_user_id", user.id)
+        .single();
+
+    if (ownerError || !owner) {
+        console.error("OWNER RECORD ERROR:", ownerError);
+
+        document.getElementById("ownerEnquiries").innerHTML = `
+            <tr>
+                <td colspan="6"
+                    style="padding:30px;text-align:center;color:#dc2626;">
+                    Owner profile not found
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    // Load enquiries only for hostels managed by this owner
+    const { data, error } = await supabaseClient
+        .from("enquiries")
+        .select(`
+            enquiry_code,
+            joining_date,
+            room_preference,
+            status,
+            students (
+                name
+            ),
+            hostel_directory!inner (
+                hostel_name,
+                claimed_by_owner_id
+            )
+        `)
+        .eq("hostel_directory.claimed_by_owner_id", owner.id)
+        .order("id", { ascending: false });
+
+
+    if (error) {
+        console.error("OWNER ENQUIRIES ERROR:", error);
+
+        document.getElementById("ownerEnquiries").innerHTML = `
+            <tr>
+                <td colspan="6"
+                    style="padding:30px;text-align:center;color:#dc2626;">
+                    Unable to load enquiries
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    const tbody =
+        document.getElementById("ownerEnquiries");
+
+
+    if (!data || data.length === 0) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6"
+                    style="padding:30px;text-align:center;color:#6b7280;">
+                    No enquiries for your property yet
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    tbody.innerHTML = data.map(enquiry => `
+
+        <tr style="border-top:1px solid #e5e7eb;">
+
+            <td style="padding:14px;">
+                ${enquiry.enquiry_code || "-"}
+            </td>
+
+            <td style="padding:14px;">
+                ${enquiry.students?.name || "-"}
+            </td>
+
+            <td style="padding:14px;">
+                ${enquiry.joining_date || "-"}
+            </td>
+
+            <td style="padding:14px;">
+                ${enquiry.room_preference || "-"}
+            </td>
+
+            <td style="padding:14px;">
+                ${enquiry.status || "Pending"}
+            </td>
+
+            <td style="padding:14px;">
+
+                <button
+                    onclick="markStudentJoined('${enquiry.enquiry_code}')"
+                    style="
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        padding:8px 12px;
+                        border-radius:6px;
+                        cursor:pointer;
+                    "
+                >
+                    Student Joined
+                </button>
+
+            </td>
+
+        </tr>
+
+    `).join("");
+}
+
+async function markStudentJoined(enquiryCode) {
+
+    const { error } = await supabaseClient
+        .from("enquiries")
+        .update({
+            status: "verified",
+            joined_confirmed_by_owner: true,
+            owner_action: "student_joined",
+            owner_action_at: new Date().toISOString(),
+            student_joined_at: new Date().toISOString()
+        })
+        .eq("enquiry_code", enquiryCode);
+
+    if (error) {
+        console.error("JOIN UPDATE ERROR:", error);
+        alert("Could not update enquiry.");
+        return;
+    }
+
+    alert("Student marked as Joined.");
+
+    loadOwnerEnquiries();
+}
+
+loadOwnerEnquiries();
+</script>
+<script>
+async function addProperty() {
+
+    const { data, error } = await supabaseClient
+        .from("hostel_directory")
+        .select(`
+            id,
+            hostel_name,
+            address,
+            verification_status,
+            management_status,
+            areas (
+                name
+            )
+        `)
+        .eq("is_active", true)
+        .order("hostel_name", { ascending: true });
+
+    if (error) {
+        console.error("PROPERTY LOAD ERROR:", error);
+        alert("Hostels load nahi ho paaye.");
+        return;
+    }
+
+    const options = (data || []).map(hostel => `
+        <option value="${hostel.id}">
+            ${hostel.hostel_name} — ${hostel.areas?.name || "Kota"}
+        </option>
+    `).join("");
+
+    const modal = document.createElement("div");
+
+    modal.id = "propertyModal";
+
+    modal.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.55);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:9999;
+        padding:20px;
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            background:white;
+            width:100%;
+            max-width:520px;
+            border-radius:14px;
+            padding:25px;
+        ">
+
+            <h2 style="margin-bottom:8px;">
+                Add My Property
+            </h2>
+
+            <p style="
+                color:#6b7280;
+                font-size:14px;
+                margin-bottom:20px;
+            ">
+                Search and select your existing hostel.
+            </p>
+
+            <select id="propertySelect" style="
+                width:100%;
+                padding:12px;
+                border:1px solid #d1d5db;
+                border-radius:8px;
+                margin-bottom:18px;
+            ">
+                <option value="">Select Hostel</option>
+                ${options}
+            </select>
+
+            <div style="
+                display:flex;
+                gap:10px;
+                justify-content:flex-end;
+            ">
+
+                <button
+                    onclick="closePropertyModal()"
+                    style="
+                        padding:10px 16px;
+                        border:1px solid #d1d5db;
+                        background:white;
+                        border-radius:8px;
+                        cursor:pointer;
+                    "
+                >
+                    Cancel
+                </button>
+
+                <button
+                    onclick="selectProperty()"
+                    style="
+                        padding:10px 16px;
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        border-radius:8px;
+                        cursor:pointer;
+                    "
+                >
+                    Continue
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+function closePropertyModal() {
+    const modal = document.getElementById("propertyModal");
+
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function selectProperty() {
+
+    const propertyId =
+        document.getElementById("propertySelect").value;
+
+    if (!propertyId) {
+        alert("Please select a hostel.");
+        return;
+    }
+
+    alert(
+        "Hostel selected successfully.\n\n" +
+        "Next step: Owner property details and claim verification."
+    );
+
+    closePropertyModal();
+}
+</script>
+<script>
+function selectProperty() {
+
+    const propertyId =
+        document.getElementById("propertySelect").value;
+
+    if (!propertyId) {
+        alert("Please select a hostel.");
+        return;
+    }
+
+    const hostelName =
+        document.getElementById("propertySelect")
+        .selectedOptions[0].textContent.trim();
+
+    closePropertyModal();
+
+    const claimModal = document.createElement("div");
+
+    claimModal.id = "claimModal";
+
+    claimModal.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.55);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:10000;
+        padding:20px;
+    `;
+
+    claimModal.innerHTML = `
+        <div style="
+            background:white;
+            width:100%;
+            max-width:520px;
+            border-radius:14px;
+            padding:25px;
+        ">
+
+            <h2 style="margin-bottom:8px;">
+                Claim This Hostel
+            </h2>
+
+            <p style="
+                color:#6b7280;
+                font-size:14px;
+                margin-bottom:20px;
+            ">
+                ${hostelName}
+            </p>
+
+            <label style="
+                display:block;
+                margin-bottom:6px;
+                font-size:14px;
+                font-weight:600;
+            ">
+                Owner Name
+            </label>
+
+            <input
+                id="claimOwnerName"
+                type="text"
+                placeholder="Enter your name"
+                style="
+                    width:100%;
+                    padding:12px;
+                    border:1px solid #d1d5db;
+                    border-radius:8px;
+                    margin-bottom:15px;
+                "
+            >
+
+            <label style="
+                display:block;
+                margin-bottom:6px;
+                font-size:14px;
+                font-weight:600;
+            ">
+                Mobile Number
+            </label>
+
+            <input
+                id="claimOwnerMobile"
+                type="tel"
+                placeholder="Enter mobile number"
+                style="
+                    width:100%;
+                    padding:12px;
+                    border:1px solid #d1d5db;
+                    border-radius:8px;
+                    margin-bottom:20px;
+                "
+            >
+
+            <div style="
+                display:flex;
+                gap:10px;
+                justify-content:flex-end;
+            ">
+
+                <button
+                    onclick="closeClaimModal()"
+                    style="
+                        padding:10px 16px;
+                        border:1px solid #d1d5db;
+                        background:white;
+                        border-radius:8px;
+                        cursor:pointer;
+                    "
+                >
+                    Cancel
+                </button>
+
+                <button
+                    onclick="submitClaim('${propertyId}')"
+                    style="
+                        padding:10px 16px;
+                        border:none;
+                        background:#111827;
+                        color:white;
+                        border-radius:8px;
+                        cursor:pointer;
+                    "
+                >
+                    Submit Claim
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(claimModal);
+}
+
+function closeClaimModal() {
+
+    const modal =
+        document.getElementById("claimModal");
+
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function submitClaim(propertyId) {
+
+    const ownerName =
+        document.getElementById("claimOwnerName").value.trim();
+
+    const ownerMobile =
+        document.getElementById("claimOwnerMobile").value.trim();
+
+    if (!ownerName || !ownerMobile) {
+        alert("Please enter your name and mobile number.");
+        return;
+    }
+
+    const { error } = await supabaseClient
+    .from("hostel_claim_requests")
+    .insert({
+        hostel_id: propertyId,
+        owner_name: ownerName,
+        owner_mobile: ownerMobile,
+        status: "pending"
+    });
+
+    if (error) {
+        console.error("CLAIM REQUEST ERROR:", error);
+        alert(
+    "Claim Error:\n\n" +
+    error.message +
+    "\n\nDetails:\n" +
+    (error.details || "No details")
+);
+        return;
+    }
+
+    alert(
+        "Claim request submitted successfully!\n\n" +
+        "Status: Pending Verification"
+    );
+
+    closeClaimModal();
+}
+async function loadOwnerProperties() {
+
+    const {
+        data: { user },
+        error: authError
+    } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+        console.error("OWNER AUTH ERROR:", authError);
+        return;
+    }
+
+    const { data: owner, error: ownerError } =
+        await supabaseClient
+            .from("owners")
+            .select("id, name")
+            .eq("auth_user_id", user.id)
+            .single();
+
+    if (ownerError || !owner) {
+        console.error("OWNER RECORD ERROR:", ownerError);
+        return;
+    }
+
+    const { data: properties, error } =
+        await supabaseClient
+            .from("hostel_directory")
+            .select(`
+                id,
+                hostel_name,
+                address,
+                verification_status,
+                management_status,
+                rent_monthly,
+                room_type,
+                available_rooms,
+                areas (
+                    name
+                )
+            `)
+            .eq("claimed_by_owner_id", owner.id)
+            .eq("is_active", true)
+            .order("hostel_name", { ascending: true });
+
+    if (error) {
+        console.error("OWNER PROPERTY ERROR:", error);
+        return;
+    }
+
+    const propertyBox =
+        document.querySelector(
+            "section:nth-of-type(2) > div"
+        );
+
+    if (!propertyBox) {
+        console.error("PROPERTY BOX NOT FOUND");
+        return;
+    }
+
+    if (!properties || properties.length === 0) {
+
+        propertyBox.innerHTML = `
+            <div>
+                <h3 style="font-size:18px; margin-bottom:6px;">
+                    No property added yet
+                </h3>
+
+                <p style="color:#6b7280; font-size:14px;">
+                    Add or claim your hostel to start receiving student enquiries.
+                </p>
+            </div>
+
+            <button
+                onclick="addProperty()"
+                style="
+                    border:none;
+                    background:#111827;
+                    color:white;
+                    padding:11px 18px;
+                    border-radius:8px;
+                    cursor:pointer;
+                    font-weight:600;
+                "
+            >
+                + Add My Property
+            </button>
+        `;
+
+        return;
+    }
+
+
+    propertyBox.innerHTML = properties.map(property => `
+
+        <div style="
+            border:1px solid #e5e7eb;
+            border-radius:10px;
+            padding:18px;
+            margin-bottom:12px;
+        ">
+
+            <h3 style="
+                font-size:19px;
+                margin-bottom:6px;
+            ">
+                ${property.hostel_name || "-"}
+            </h3>
+
+            <p style="
+                color:#6b7280;
+                font-size:14px;
+                margin-bottom:8px;
+            ">
+                ${property.areas?.name || "Kota"}
+                ${property.address ? " • " + property.address : ""}
+            </p>
+
+            <p style="
+                font-size:14px;
+                margin-bottom:6px;
+            ">
+                <strong>Management:</strong>
+                ${property.management_status || "-"}
+            </p>
+
+            <p style="
+                font-size:14px;
+                margin-bottom:6px;
+            ">
+                <strong>Verification:</strong>
+                ${property.verification_status || "-"}
+            </p>
+
+            <p style="
+                font-size:14px;
+            ">
+                <strong>Rent:</strong>
+                ${property.rent_monthly
+                    ? "₹" + property.rent_monthly + "/month"
+                    : "Not updated"}
+            </p>
+
+        </div>
+
+    `).join("");
+}
+
+
+loadOwnerProperties();</script>
+</body>
+</html>
